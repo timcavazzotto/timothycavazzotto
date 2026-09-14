@@ -171,6 +171,26 @@
   .quiz-q .exp { font-size:12px; color:#555; margin-top:4px; display:none; }
   .quiz-q.answered .exp { display:block; }
 
+  /* ---- história com lacunas ---- */
+  .narrative-block { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+  .narrative-block h4 { font-size:12.5px; text-transform:uppercase; letter-spacing:0.03em; color:var(--gray); margin:0 0 6px 0; }
+  .narrative-block .instr { font-size:12.5px; color:var(--gray); margin-bottom:12px; }
+  .narrative-text { font-size:14px; line-height:2.1; color:var(--ink); }
+  input.blank, select.blank {
+    display:inline-block; border:none; border-bottom:2px solid var(--blue); background:#eef4fb;
+    padding:2px 6px; margin:0 2px; font-family:inherit; font-size:13.5px; font-weight:600;
+    color:var(--ink); border-radius:3px 3px 0 0; text-align:center;
+  }
+  input.blank { width:58px; }
+  select.blank { max-width:260px; }
+  input.blank.blank-correct, select.blank.blank-correct { background:rgba(59,110,165,0.16); border-bottom-color:var(--blue); }
+  input.blank.blank-wrong, select.blank.blank-wrong { background:rgba(179,69,44,0.12); border-bottom-color:var(--sig); }
+  .narrative-check-btn {
+    font-size:13px; padding:8px 16px; border-radius:6px; border:1px solid var(--blue); background:white;
+    color:var(--blue); cursor:pointer; font-family:inherit; font-weight:600; margin-top:10px;
+  }
+  .narrative-result { margin-top:10px; font-size:13px; }
+
   @media (max-width: 940px) {
     main { grid-template-columns:1fr; }
     .controls { border-right:none; border-bottom:1px solid var(--line); position:static; }
@@ -258,6 +278,22 @@
             <div id="A-predict-feedback"></div>
             <div id="A-table"></div>
             <p class="interp" id="A-interp" style="margin-top:14px"></p>
+            <div class="narrative-block">
+              <h4>Escreva o relato do estudo</h4>
+              <div class="instr">Complete os espaços usando os números e conclusões da tabela acima — como se você estivesse escrevendo a seção de Resultados de um artigo.</div>
+              <p class="narrative-text">
+                Foram incluídos <input type="text" class="blank" data-key="n" size="3"> pacientes por grupo (Fármaco e Placebo). A redução média da PA sistólica foi de <input type="text" class="blank" data-key="meanA" size="5"> mmHg (DP <input type="text" class="blank" data-key="sdA" size="5">) no grupo Fármaco, e de <input type="text" class="blank" data-key="meanB" size="5"> mmHg (DP <input type="text" class="blank" data-key="sdB" size="5">) no grupo Placebo. Como os dados
+                <select class="blank" data-key="normal"><option value="">selecione</option><option value="eram">eram</option><option value="não eram">não eram</option></select>
+                compatíveis com distribuição normal, foi utilizado o
+                <select class="blank" data-key="test"><option value="">selecione</option><option value="teste t de Welch">teste t de Welch</option><option value="Mann-Whitney U">Mann-Whitney U</option></select>
+                para a comparação entre os grupos, que indicou
+                <select class="blank" data-key="sig"><option value="">selecione</option><option value="diferença estatisticamente significativa">diferença estatisticamente significativa</option><option value="nenhuma diferença estatisticamente significativa">nenhuma diferença estatisticamente significativa</option></select>
+                (p = <input type="text" class="blank" data-key="p" size="6">). O tamanho de efeito encontrado foi <input type="text" class="blank" data-key="effect" size="5">, classificado como
+                <select class="blank" data-key="efflabel"><option value="">selecione</option><option value="negligenciável">negligenciável</option><option value="pequeno">pequeno</option><option value="médio">médio</option><option value="grande">grande</option></select>.
+              </p>
+              <button class="narrative-check-btn" data-page="A">Verificar preenchimento</button>
+              <div class="narrative-result" id="A-narrative-result"></div>
+            </div>
             <div class="quiz-block">
               <h4>Confira se você entendeu</h4>
               <div class="quiz-q" data-correct="1">
@@ -348,6 +384,22 @@
             <div id="B-predict-feedback"></div>
             <div id="B-table"></div>
             <p class="interp" id="B-interp" style="margin-top:14px"></p>
+            <div class="narrative-block">
+              <h4>Escreva o relato do estudo</h4>
+              <div class="instr">Complete os espaços usando os números e conclusões da tabela acima — como se você estivesse escrevendo a seção de Resultados de um artigo.</div>
+              <p class="narrative-text">
+                Foram incluídos <input type="text" class="blank" data-key="n" size="3"> pacientes por grupo (Dose baixa, Dose alta e Placebo). A redução média da PA sistólica foi de <input type="text" class="blank" data-key="mean1" size="5"> mmHg (Dose baixa), <input type="text" class="blank" data-key="mean2" size="5"> mmHg (Dose alta) e <input type="text" class="blank" data-key="mean3" size="5"> mmHg (Placebo). Como os dados
+                <select class="blank" data-key="normal"><option value="">selecione</option><option value="eram">eram</option><option value="não eram">não eram</option></select>
+                compatíveis com distribuição normal, foi utilizada a
+                <select class="blank" data-key="test"><option value="">selecione</option><option value="ANOVA de um fator">ANOVA de um fator</option><option value="Kruskal-Wallis">Kruskal-Wallis</option></select>
+                para a comparação entre os grupos, que indicou
+                <select class="blank" data-key="sig"><option value="">selecione</option><option value="diferença estatisticamente significativa">diferença estatisticamente significativa</option><option value="nenhuma diferença estatisticamente significativa">nenhuma diferença estatisticamente significativa</option></select>
+                entre os grupos (p = <input type="text" class="blank" data-key="p" size="6">). O tamanho de efeito encontrado foi <input type="text" class="blank" data-key="effect" size="5">, classificado como
+                <select class="blank" data-key="efflabel"><option value="">selecione</option><option value="negligenciável">negligenciável</option><option value="pequeno">pequeno</option><option value="médio">médio</option><option value="grande">grande</option></select>.
+              </p>
+              <button class="narrative-check-btn" data-page="B">Verificar preenchimento</button>
+              <div class="narrative-result" id="B-narrative-result"></div>
+            </div>
             <div class="quiz-block">
               <h4>Confira se você entendeu</h4>
               <div class="quiz-q" data-correct="1">
@@ -440,6 +492,22 @@
             <div id="C-predict-feedback"></div>
             <div id="C-table"></div>
             <p class="interp" id="C-interp" style="margin-top:14px"></p>
+            <div class="narrative-block">
+              <h4>Escreva o relato do estudo</h4>
+              <div class="instr">Complete os espaços usando os números e conclusões da tabela acima — como se você estivesse escrevendo a seção de Resultados de um artigo.</div>
+              <p class="narrative-text">
+                Foram acompanhados <input type="text" class="blank" data-key="n" size="3"> pacientes por grupo, avaliados no Basal e na Semana 12. No grupo Fármaco, a PA sistólica variou de <input type="text" class="blank" data-key="basalA" size="5"> para <input type="text" class="blank" data-key="sem12A" size="5"> mmHg (Δ = <input type="text" class="blank" data-key="deltaA" size="6">); no grupo Placebo, de <input type="text" class="blank" data-key="basalB" size="5"> para <input type="text" class="blank" data-key="sem12B" size="5"> mmHg (Δ = <input type="text" class="blank" data-key="deltaB" size="6">). Como a variação (Δ)
+                <select class="blank" data-key="normal"><option value="">selecione</option><option value="era">era</option><option value="não era">não era</option></select>
+                compatível com distribuição normal, foi utilizado o
+                <select class="blank" data-key="test"><option value="">selecione</option><option value="teste t de Welch">teste t de Welch</option><option value="Mann-Whitney U">Mann-Whitney U</option></select>
+                para comparar a variação entre os grupos, indicando
+                <select class="blank" data-key="sig"><option value="">selecione</option><option value="diferença estatisticamente significativa">diferença estatisticamente significativa</option><option value="nenhuma diferença estatisticamente significativa">nenhuma diferença estatisticamente significativa</option></select>
+                (p = <input type="text" class="blank" data-key="p" size="6">). O tamanho de efeito encontrado foi <input type="text" class="blank" data-key="effect" size="5">, classificado como
+                <select class="blank" data-key="efflabel"><option value="">selecione</option><option value="negligenciável">negligenciável</option><option value="pequeno">pequeno</option><option value="médio">médio</option><option value="grande">grande</option></select>.
+              </p>
+              <button class="narrative-check-btn" data-page="C">Verificar preenchimento</button>
+              <div class="narrative-result" id="C-narrative-result"></div>
+            </div>
             <div class="quiz-block">
               <h4>Confira se você entendeu</h4>
               <div class="quiz-q" data-correct="1">
@@ -859,6 +927,7 @@ const TIP = {
   eta2h: 'η²_H: versão do η² baseada em postos, usada com o Kruskal-Wallis.',
 };
 const officialSig = {};
+const blankAnswers = {};
 
 /* =========================================================
    GRÁFICOS (histograma multi-grupo, boxplot multi-grupo, espaguete)
@@ -1022,6 +1091,17 @@ function updateA() {
 
   const tt=welchTTest(descA,descB), d=cohenD(descA,descB), mw=mannWhitneyU(dataA,dataB);
   officialSig.A = bothNormal ? (tt.p<0.05) : (mw.p<0.05);
+  blankAnswers.A = {
+    n: {type:'num', value:n, tol:0.4},
+    meanA: {type:'num', value:descA.mean, tol:0.06}, sdA: {type:'num', value:descA.sd, tol:0.06},
+    meanB: {type:'num', value:descB.mean, tol:0.06}, sdB: {type:'num', value:descB.sd, tol:0.06},
+    normal: {type:'str', value: bothNormal ? 'eram' : 'não eram'},
+    test: {type:'str', value: bothNormal ? 'teste t de Welch' : 'Mann-Whitney U'},
+    sig: {type:'str', value: officialSig.A ? 'diferença estatisticamente significativa' : 'nenhuma diferença estatisticamente significativa'},
+    p: {type:'p', value: bothNormal ? tt.p : mw.p},
+    effect: {type:'num', value: bothNormal ? d : mw.r, tol:0.05},
+    efflabel: {type:'str', value: bothNormal ? dLabel(d) : rLabel(mw.r)},
+  };
 
   renderJournalTable('A-table', 'Tabela 1. Comparação entre grupos quanto à redução da PA sistólica (mmHg), 12 semanas.',
     ['Variável','Fármaco (n='+n+')','Placebo (n='+n+')','Teste','Estatística','p','Efeito'],
@@ -1082,6 +1162,16 @@ function updateB() {
 
   const anova=oneWayAnova([data1,data2,data3]), kw=kruskalWallis([data1,data2,data3]);
   officialSig.B = allNormal ? (anova.p<0.05) : (kw.p<0.05);
+  blankAnswers.B = {
+    n: {type:'num', value:n, tol:0.4},
+    mean1: {type:'num', value:desc1.mean, tol:0.06}, mean2: {type:'num', value:desc2.mean, tol:0.06}, mean3: {type:'num', value:desc3.mean, tol:0.06},
+    normal: {type:'str', value: allNormal ? 'eram' : 'não eram'},
+    test: {type:'str', value: allNormal ? 'ANOVA de um fator' : 'Kruskal-Wallis'},
+    sig: {type:'str', value: officialSig.B ? 'diferença estatisticamente significativa' : 'nenhuma diferença estatisticamente significativa'},
+    p: {type:'p', value: allNormal ? anova.p : kw.p},
+    effect: {type:'num', value: allNormal ? anova.eta2 : kw.etaH, tol:0.03},
+    efflabel: {type:'str', value: allNormal ? etaLabel(anova.eta2) : etaLabel(kw.etaH)},
+  };
 
   renderJournalTable('B-table', 'Tabela 1. Comparação entre grupos quanto à redução da PA sistólica (mmHg), 12 semanas.',
     ['Variável','Dose baixa (n='+n+')','Dose alta (n='+n+')','Placebo (n='+n+')','Teste','Estatística','p','Efeito'],
@@ -1146,6 +1236,17 @@ function updateC() {
   const dzA=cohenDz(pairA.T1,pairA.T0), dzB=cohenDz(pairB.T1,pairB.T0);
   const ttDelta=welchTTest(descDA,descDB), dDelta=cohenD(descDA,descDB), mwDelta=mannWhitneyU(deltaA,deltaB);
   officialSig.C = bothNormal ? (ttDelta.p<0.05) : (mwDelta.p<0.05);
+  blankAnswers.C = {
+    n: {type:'num', value:n, tol:0.4},
+    basalA: {type:'num', value: mean(pairA.T0), tol:0.06}, sem12A: {type:'num', value: mean(pairA.T1), tol:0.06}, deltaA: {type:'num', value: descDA.mean, tol:0.06},
+    basalB: {type:'num', value: mean(pairB.T0), tol:0.06}, sem12B: {type:'num', value: mean(pairB.T1), tol:0.06}, deltaB: {type:'num', value: descDB.mean, tol:0.06},
+    normal: {type:'str', value: bothNormal ? 'era' : 'não era'},
+    test: {type:'str', value: bothNormal ? 'teste t de Welch' : 'Mann-Whitney U'},
+    sig: {type:'str', value: officialSig.C ? 'diferença estatisticamente significativa' : 'nenhuma diferença estatisticamente significativa'},
+    p: {type:'p', value: bothNormal ? ttDelta.p : mwDelta.p},
+    effect: {type:'num', value: bothNormal ? dDelta : mwDelta.r, tol:0.05},
+    efflabel: {type:'str', value: bothNormal ? dLabel(dDelta) : rLabel(mwDelta.r)},
+  };
 
   renderJournalTable('C-table', 'Tabela 1. PA sistólica (mmHg) no basal, na semana 12, e variação (Δ) entre grupos.',
     ['Variável','Fármaco (n='+n+')','Placebo (n='+n+')','Teste (entre grupos)','Estatística','p','Efeito'],
@@ -1301,6 +1402,43 @@ document.querySelectorAll('.quiz-check-btn').forEach(btn => {
       else { q.classList.add('wrong'); }
     });
     el(`${page}-quiz-result`).innerHTML = `<b>${correctCount} de ${questions.length} corretas.</b> ${correctCount===questions.length ? 'Show de bola!' : 'Veja as explicações em vermelho/azul acima.'}`;
+  });
+});
+
+/* =========================================================
+   HISTÓRIA COM LACUNAS
+   ========================================================= */
+function normalizeNum(str) { return parseFloat(String(str).trim().replace(',', '.')); }
+function checkP(raw, expected) {
+  const t = String(raw).trim().toLowerCase().replace(/\s+/g,'');
+  if (expected < 0.0001) {
+    if (t === '<0,0001' || t === '<0.0001') return true;
+    const n = parseFloat(t.replace(',','.').replace('<',''));
+    return !isNaN(n) && n < 0.0002;
+  }
+  const n = normalizeNum(raw);
+  return !isNaN(n) && Math.abs(n - expected) <= 0.0008;
+}
+document.querySelectorAll('.narrative-check-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page;
+    const answers = blankAnswers[page];
+    const block = btn.closest('.narrative-block');
+    let correct = 0, total = 0;
+    block.querySelectorAll('.blank').forEach(inputEl => {
+      const key = inputEl.dataset.key;
+      const exp = answers[key];
+      if (!exp) return;
+      total++;
+      let ok;
+      if (exp.type === 'p') ok = checkP(inputEl.value, exp.value);
+      else if (exp.type === 'num') { const n = normalizeNum(inputEl.value); ok = !isNaN(n) && Math.abs(n-exp.value) <= exp.tol; }
+      else ok = inputEl.value.trim() === exp.value;
+      inputEl.classList.remove('blank-correct','blank-wrong');
+      inputEl.classList.add(ok?'blank-correct':'blank-wrong');
+      if (ok) correct++;
+    });
+    el(`${page}-narrative-result`).innerHTML = `<b>${correct} de ${total} corretas.</b> ${correct===total?'Perfeito — sua descrição bate com os dados.':'Reveja os campos em vermelho.'}`;
   });
 });
 
