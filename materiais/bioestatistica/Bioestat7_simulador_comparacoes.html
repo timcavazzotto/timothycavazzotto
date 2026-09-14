@@ -101,6 +101,76 @@
   .interp { font-size:14px; line-height:1.55; color:var(--ink); }
   .interp strong { color:var(--blue); }
 
+  /* ---- presets ---- */
+  .preset-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .preset-btn {
+    font-size:11.5px; padding:6px 10px; border-radius:14px; border:1px solid #c8d2dc;
+    background:white; color:var(--blue); cursor:pointer; font-family:inherit; font-weight:600;
+  }
+  .preset-btn:hover { background:#f0f4f9; }
+
+  /* ---- accordion ---- */
+  details.ctrl-accordion { border-top:1px solid var(--line); padding:10px 0 2px 0; margin-bottom:6px; }
+  details.ctrl-accordion summary {
+    font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--gray);
+    font-weight:600; cursor:pointer; padding:2px 0; list-style:none;
+  }
+  details.ctrl-accordion summary::-webkit-details-marker { display:none; }
+  details.ctrl-accordion summary::before { content:'▸ '; color:var(--blue); }
+  details.ctrl-accordion[open] summary::before { content:'▾ '; }
+  details.ctrl-accordion .acc-body { padding-top:10px; }
+
+  /* ---- tooltip em termos técnicos ---- */
+  .term { border-bottom:1px dotted #9aa6b2; cursor:help; position:relative; }
+  .term:hover::after {
+    content: attr(data-tip); position:absolute; left:0; top:130%; z-index:30;
+    background:#1c1c1c; color:#fff; padding:7px 10px; border-radius:5px; font-size:11.5px;
+    font-weight:400; white-space:normal; width:230px; line-height:1.4; box-shadow:0 3px 10px rgba(0,0,0,0.2);
+  }
+
+  /* ---- previsão / trava ---- */
+  .predict-box { padding:16px 18px; border:1px dashed #b9c4d0; border-radius:6px; background:#f8fafc; text-align:center; }
+  .predict-box .q { font-size:14px; font-weight:600; margin-bottom:12px; }
+  .predict-btn {
+    font-size:13.5px; padding:9px 18px; border-radius:6px; border:1px solid #c8d2dc; background:white;
+    cursor:pointer; font-family:inherit; font-weight:600; margin:0 5px; color:var(--ink);
+  }
+  .predict-btn.chosen { background:var(--blue); color:white; border-color:var(--blue); }
+  .predict-reveal-btn {
+    display:block; margin:14px auto 0; font-size:13.5px; padding:9px 20px; border-radius:6px;
+    border:none; background:var(--kolb); color:white; cursor:pointer; font-family:inherit; font-weight:700;
+    opacity:0.4; pointer-events:none;
+  }
+  .predict-reveal-btn.ready { opacity:1; pointer-events:auto; }
+  .predict-feedback { font-size:13.5px; padding:10px 14px; border-radius:5px; margin-bottom:14px; }
+  .predict-feedback.correct { background:rgba(59,110,165,0.1); color:var(--blue); }
+  .predict-feedback.wrong { background:rgba(179,69,44,0.1); color:var(--sig); }
+  .redo-predict { font-size:12px; color:var(--gray); background:none; border:none; text-decoration:underline; cursor:pointer; font-family:inherit; padding:0; margin-bottom:10px; }
+  .reveal-wrap[data-locked="true"] { display:none; }
+  .predict-box[data-locked="false"] { display:none; }
+
+  /* ---- sync seed ---- */
+  .sync-bar { display:flex; align-items:center; gap:8px; padding:8px 28px; background:#eef2f7; border-bottom:1px solid var(--line); font-size:12.5px; color:var(--gray); }
+  .sync-bar input { accent-color:var(--blue); }
+  .sync-bar label { cursor:pointer; }
+
+  /* ---- quiz ---- */
+  .quiz-block { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+  .quiz-block h4 { font-size:12.5px; text-transform:uppercase; letter-spacing:0.03em; color:var(--gray); margin:0 0 12px 0; }
+  .quiz-q { margin-bottom:14px; }
+  .quiz-q .qtext { font-size:13.5px; font-weight:600; margin-bottom:6px; }
+  .quiz-q .opt { display:block; font-size:13px; padding:4px 0; cursor:pointer; }
+  .quiz-q .opt input { margin-right:7px; accent-color:var(--blue); }
+  .quiz-check-btn {
+    font-size:13px; padding:8px 16px; border-radius:6px; border:1px solid var(--blue); background:white;
+    color:var(--blue); cursor:pointer; font-family:inherit; font-weight:600;
+  }
+  .quiz-result { margin-top:10px; font-size:13px; }
+  .quiz-q.correct .qtext { color:var(--blue); }
+  .quiz-q.wrong .qtext { color:var(--sig); }
+  .quiz-q .exp { font-size:12px; color:#555; margin-top:4px; display:none; }
+  .quiz-q.answered .exp { display:block; }
+
   @media (max-width: 940px) {
     main { grid-template-columns:1fr; }
     .controls { border-right:none; border-bottom:1px solid var(--line); position:static; }
@@ -124,6 +194,11 @@
   <button class="tab-btn" data-page="C">Cenário C<span class="sub">2 grupos × 2 momentos</span></button>
 </div>
 
+<div class="sync-bar">
+  <input type="checkbox" id="sync-seed-toggle">
+  <label for="sync-seed-toggle">🔗 Sincronizar a semente (seed) entre as 3 abas — mesma "população", três perguntas diferentes</label>
+</div>
+
 <div class="kolb-strip">
   <div class="kstep"><b>1 · Experiência concreta</b>a pergunta e o desenho</div>
   <div class="kstep"><b>2 · Observação reflexiva</b>olhe a forma dos dados</div>
@@ -135,18 +210,11 @@
 <div class="page active" id="page-A">
   <main>
     <div class="controls">
-      <fieldset class="ctrl-group">
-        <legend>Amostra e ruído</legend>
-        <div class="control"><label>n por grupo <span class="val" id="A-val-n">25</span></label>
-          <input type="range" id="A-ctrl-n" min="5" max="300" step="5" value="25"></div>
-        <div class="control"><label>Desvio-padrão comum <span class="val" id="A-val-sd">10</span></label>
-          <input type="range" id="A-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
-        <div class="control"><label>Semente (seed) <span class="val" id="A-val-seed">42</span></label>
-          <input type="range" id="A-ctrl-seed" min="1" max="100" step="1" value="42"></div>
-        <div class="control checkbox-row"><input type="checkbox" id="A-ctrl-lognormal">
-          <div class="cb-text"><label for="A-ctrl-lognormal">Distribuição assimétrica</label>
-          <div class="hint">Testa violação de normalidade.</div></div></div>
-      </fieldset>
+      <div class="preset-row">
+        <button class="preset-btn" data-page="A" data-preset="big">Efeito grande e claro</button>
+        <button class="preset-btn" data-page="A" data-preset="small">Efeito pequeno e ambíguo</button>
+        <button class="preset-btn" data-page="A" data-preset="skew">Dados assimétricos</button>
+      </div>
       <fieldset class="ctrl-group">
         <legend>Cenário A</legend>
         <div class="control"><label>Média Fármaco — redução (mmHg) <span class="val" id="A-val-mean1">9.0</span></label>
@@ -154,6 +222,20 @@
         <div class="control"><label>Média Placebo — redução (mmHg) <span class="val" id="A-val-mean2">5.0</span></label>
           <input type="range" id="A-ctrl-mean2" min="0" max="20" step="0.5" value="5"></div>
       </fieldset>
+      <details class="ctrl-accordion">
+        <summary>Amostra e ruído</summary>
+        <div class="acc-body">
+          <div class="control"><label>n por grupo <span class="val" id="A-val-n">25</span></label>
+            <input type="range" id="A-ctrl-n" min="5" max="300" step="5" value="25"></div>
+          <div class="control"><label>Desvio-padrão comum <span class="val" id="A-val-sd">10</span></label>
+            <input type="range" id="A-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
+          <div class="control"><label>Semente (seed) <span class="val" id="A-val-seed">42</span></label>
+            <input type="range" id="A-ctrl-seed" min="1" max="100" step="1" value="42"></div>
+          <div class="control checkbox-row"><input type="checkbox" id="A-ctrl-lognormal">
+            <div class="cb-text"><label for="A-ctrl-lognormal">Distribuição assimétrica</label>
+            <div class="hint">Testa violação de normalidade.</div></div></div>
+        </div>
+      </details>
       <div class="legend-note" id="A-legend"></div>
     </div>
     <div class="outputs">
@@ -164,7 +246,50 @@
       <div class="kolb-block"><div class="kolb-head"><div class="num">3</div><div><div class="title">Conceituação abstrata</div><div class="subtitle">os dados atendem à normalidade?</div></div></div>
         <div class="kolb-body"><div class="norm-grid" id="A-norm"></div><div class="recommend" id="A-recommend"></div></div></div>
       <div class="kolb-block"><div class="kolb-head"><div class="num">4</div><div><div class="title">Experimentação ativa</div><div class="subtitle">o resultado, formatado como aparece num artigo</div></div></div>
-        <div class="kolb-body"><div id="A-table"></div><p class="interp" id="A-interp" style="margin-top:14px"></p></div></div>
+        <div class="kolb-body">
+          <div class="predict-box" id="A-predictbox" data-locked="true">
+            <div class="q">Antes de ver o resultado: você acha que vai dar uma diferença estatisticamente significativa?</div>
+            <button class="predict-btn" data-page="A" data-guess="true">Sim, vai dar significativo</button>
+            <button class="predict-btn" data-page="A" data-guess="false">Não, não vai dar significativo</button>
+            <button class="predict-reveal-btn" id="A-reveal-btn" data-page="A">Ver resultado</button>
+          </div>
+          <div class="reveal-wrap" id="A-reveal-wrap" data-locked="true">
+            <button class="redo-predict" data-page="A">🔄 Mudei algo — fazer nova previsão</button>
+            <div id="A-predict-feedback"></div>
+            <div id="A-table"></div>
+            <p class="interp" id="A-interp" style="margin-top:14px"></p>
+            <div class="quiz-block">
+              <h4>Confira se você entendeu</h4>
+              <div class="quiz-q" data-correct="1">
+                <div class="qtext">1. Se os dois grupos não fossem compatíveis com normalidade, qual teste seria mais indicado?</div>
+                <label class="opt"><input type="radio" name="A-q1" value="0"> Teste t de Welch</label>
+                <label class="opt"><input type="radio" name="A-q1" value="1"> Mann-Whitney U</label>
+                <label class="opt"><input type="radio" name="A-q1" value="2"> ANOVA</label>
+                <label class="opt"><input type="radio" name="A-q1" value="3"> Qui-quadrado</label>
+                <div class="exp">O Mann-Whitney não exige normalidade — compara postos (medianas), não médias.</div>
+              </div>
+              <div class="quiz-q" data-correct="1">
+                <div class="qtext">2. O que o d de Cohen mede, exatamente?</div>
+                <label class="opt"><input type="radio" name="A-q2" value="0"> A probabilidade de erro tipo I</label>
+                <label class="opt"><input type="radio" name="A-q2" value="1"> A distância entre as médias, em unidades de desvio-padrão</label>
+                <label class="opt"><input type="radio" name="A-q2" value="2"> O tamanho da amostra necessário</label>
+                <label class="opt"><input type="radio" name="A-q2" value="3"> A variância dentro dos grupos</label>
+                <div class="exp">d = diferença de médias ÷ desvio-padrão combinado — "sinal ÷ ruído", sem depender de N.</div>
+              </div>
+              <div class="quiz-q" data-correct="1">
+                <div class="qtext">3. Se p=0,03 mas d=0,15, o que isso sugere?</div>
+                <label class="opt"><input type="radio" name="A-q3" value="0"> Efeito grande e clinicamente importante</label>
+                <label class="opt"><input type="radio" name="A-q3" value="1"> Diferença real, mas de magnitude pequena</label>
+                <label class="opt"><input type="radio" name="A-q3" value="2"> Erro no cálculo</label>
+                <label class="opt"><input type="radio" name="A-q3" value="3"> A amostra é pequena demais para confiar em qualquer conclusão</label>
+                <div class="exp">p pequeno diz "é real"; d pequeno diz "mas quase não importa" — as duas perguntas são independentes.</div>
+              </div>
+              <button class="quiz-check-btn" data-page="A">Verificar respostas</button>
+              <div class="quiz-result" id="A-quiz-result"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -173,18 +298,11 @@
 <div class="page" id="page-B">
   <main>
     <div class="controls">
-      <fieldset class="ctrl-group">
-        <legend>Amostra e ruído</legend>
-        <div class="control"><label>n por grupo <span class="val" id="B-val-n">25</span></label>
-          <input type="range" id="B-ctrl-n" min="5" max="300" step="5" value="25"></div>
-        <div class="control"><label>Desvio-padrão comum <span class="val" id="B-val-sd">10</span></label>
-          <input type="range" id="B-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
-        <div class="control"><label>Semente (seed) <span class="val" id="B-val-seed">42</span></label>
-          <input type="range" id="B-ctrl-seed" min="1" max="100" step="1" value="42"></div>
-        <div class="control checkbox-row"><input type="checkbox" id="B-ctrl-lognormal">
-          <div class="cb-text"><label for="B-ctrl-lognormal">Distribuição assimétrica</label>
-          <div class="hint">Testa violação de normalidade.</div></div></div>
-      </fieldset>
+      <div class="preset-row">
+        <button class="preset-btn" data-page="B" data-preset="big">Efeito grande e claro</button>
+        <button class="preset-btn" data-page="B" data-preset="small">Efeito pequeno e ambíguo</button>
+        <button class="preset-btn" data-page="B" data-preset="skew">Dados assimétricos</button>
+      </div>
       <fieldset class="ctrl-group">
         <legend>Cenário B</legend>
         <div class="control"><label>Dose baixa — redução (mmHg) <span class="val" id="B-val-mean1">7.0</span></label>
@@ -194,6 +312,20 @@
         <div class="control"><label>Placebo — redução (mmHg) <span class="val" id="B-val-mean3">5.0</span></label>
           <input type="range" id="B-ctrl-mean3" min="0" max="20" step="0.5" value="5"></div>
       </fieldset>
+      <details class="ctrl-accordion">
+        <summary>Amostra e ruído</summary>
+        <div class="acc-body">
+          <div class="control"><label>n por grupo <span class="val" id="B-val-n">25</span></label>
+            <input type="range" id="B-ctrl-n" min="5" max="300" step="5" value="25"></div>
+          <div class="control"><label>Desvio-padrão comum <span class="val" id="B-val-sd">10</span></label>
+            <input type="range" id="B-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
+          <div class="control"><label>Semente (seed) <span class="val" id="B-val-seed">42</span></label>
+            <input type="range" id="B-ctrl-seed" min="1" max="100" step="1" value="42"></div>
+          <div class="control checkbox-row"><input type="checkbox" id="B-ctrl-lognormal">
+            <div class="cb-text"><label for="B-ctrl-lognormal">Distribuição assimétrica</label>
+            <div class="hint">Testa violação de normalidade.</div></div></div>
+        </div>
+      </details>
       <div class="legend-note" id="B-legend"></div>
     </div>
     <div class="outputs">
@@ -204,7 +336,50 @@
       <div class="kolb-block"><div class="kolb-head"><div class="num">3</div><div><div class="title">Conceituação abstrata</div><div class="subtitle">os dados atendem à normalidade?</div></div></div>
         <div class="kolb-body"><div class="norm-grid" id="B-norm"></div><div class="recommend" id="B-recommend"></div></div></div>
       <div class="kolb-block"><div class="kolb-head"><div class="num">4</div><div><div class="title">Experimentação ativa</div><div class="subtitle">o resultado, formatado como aparece num artigo</div></div></div>
-        <div class="kolb-body"><div id="B-table"></div><p class="interp" id="B-interp" style="margin-top:14px"></p></div></div>
+        <div class="kolb-body">
+          <div class="predict-box" id="B-predictbox" data-locked="true">
+            <div class="q">Antes de ver o resultado: você acha que vai dar uma diferença estatisticamente significativa entre os 3 grupos?</div>
+            <button class="predict-btn" data-page="B" data-guess="true">Sim, vai dar significativo</button>
+            <button class="predict-btn" data-page="B" data-guess="false">Não, não vai dar significativo</button>
+            <button class="predict-reveal-btn" id="B-reveal-btn" data-page="B">Ver resultado</button>
+          </div>
+          <div class="reveal-wrap" id="B-reveal-wrap" data-locked="true">
+            <button class="redo-predict" data-page="B">🔄 Mudei algo — fazer nova previsão</button>
+            <div id="B-predict-feedback"></div>
+            <div id="B-table"></div>
+            <p class="interp" id="B-interp" style="margin-top:14px"></p>
+            <div class="quiz-block">
+              <h4>Confira se você entendeu</h4>
+              <div class="quiz-q" data-correct="1">
+                <div class="qtext">1. A ANOVA deu p=0,03. O que isso te diz sobre qual grupo difere de qual?</div>
+                <label class="opt"><input type="radio" name="B-q1" value="0"> Que a dose baixa difere da dose alta</label>
+                <label class="opt"><input type="radio" name="B-q1" value="1"> Que existe alguma diferença entre os 3, mas não diz qual par</label>
+                <label class="opt"><input type="radio" name="B-q1" value="2"> Que o placebo é igual às duas doses</label>
+                <label class="opt"><input type="radio" name="B-q1" value="3"> Nada — seria preciso repetir o estudo</label>
+                <div class="exp">A ANOVA testa uma hipótese global. Pra saber qual par difere, é preciso um post-hoc (Tukey).</div>
+              </div>
+              <div class="quiz-q" data-correct="1">
+                <div class="qtext">2. Por que não rodamos 3 testes t em vez de uma ANOVA?</div>
+                <label class="opt"><input type="radio" name="B-q2" value="0"> Porque o teste t é mais difícil de calcular</label>
+                <label class="opt"><input type="radio" name="B-q2" value="1"> Porque isso inflaria o erro tipo I</label>
+                <label class="opt"><input type="radio" name="B-q2" value="2"> Porque a ANOVA é mais rápida de calcular</label>
+                <label class="opt"><input type="radio" name="B-q2" value="3"> Não haveria diferença nenhuma</label>
+                <div class="exp">3 testes t = 3 chances de erro tipo I. A ANOVA faz uma única pergunta global, com um único α.</div>
+              </div>
+              <div class="quiz-q" data-correct="3">
+                <div class="qtext">3. Um η² de 0,14 é classificado como...</div>
+                <label class="opt"><input type="radio" name="B-q3" value="0"> negligenciável</label>
+                <label class="opt"><input type="radio" name="B-q3" value="1"> pequeno</label>
+                <label class="opt"><input type="radio" name="B-q3" value="2"> médio</label>
+                <label class="opt"><input type="radio" name="B-q3" value="3"> grande</label>
+                <div class="exp">Referência de Cohen para η²: &lt;0,01 negligenciável · &lt;0,06 pequeno · &lt;0,14 médio · ≥0,14 grande.</div>
+              </div>
+              <button class="quiz-check-btn" data-page="B">Verificar respostas</button>
+              <div class="quiz-result" id="B-quiz-result"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -213,18 +388,11 @@
 <div class="page" id="page-C">
   <main>
     <div class="controls">
-      <fieldset class="ctrl-group">
-        <legend>Amostra e ruído</legend>
-        <div class="control"><label>n por grupo <span class="val" id="C-val-n">25</span></label>
-          <input type="range" id="C-ctrl-n" min="5" max="300" step="5" value="25"></div>
-        <div class="control"><label>Desvio-padrão comum <span class="val" id="C-val-sd">10</span></label>
-          <input type="range" id="C-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
-        <div class="control"><label>Semente (seed) <span class="val" id="C-val-seed">42</span></label>
-          <input type="range" id="C-ctrl-seed" min="1" max="100" step="1" value="42"></div>
-        <div class="control checkbox-row"><input type="checkbox" id="C-ctrl-lognormal">
-          <div class="cb-text"><label for="C-ctrl-lognormal">Distribuição assimétrica</label>
-          <div class="hint">Testa violação de normalidade.</div></div></div>
-      </fieldset>
+      <div class="preset-row">
+        <button class="preset-btn" data-page="C" data-preset="big">Efeito grande e claro</button>
+        <button class="preset-btn" data-page="C" data-preset="small">Efeito pequeno e ambíguo</button>
+        <button class="preset-btn" data-page="C" data-preset="skew">Dados assimétricos</button>
+      </div>
       <fieldset class="ctrl-group">
         <legend>Cenário C</legend>
         <div class="control"><label>PAS basal comum (mmHg) <span class="val" id="C-val-base">148</span></label>
@@ -236,6 +404,20 @@
         <div class="control"><label>Correlação teste-reteste <span class="val" id="C-val-corr">0.65</span></label>
           <input type="range" id="C-ctrl-corr" min="0" max="0.95" step="0.05" value="0.65"></div>
       </fieldset>
+      <details class="ctrl-accordion">
+        <summary>Amostra e ruído</summary>
+        <div class="acc-body">
+          <div class="control"><label>n por grupo <span class="val" id="C-val-n">25</span></label>
+            <input type="range" id="C-ctrl-n" min="5" max="300" step="5" value="25"></div>
+          <div class="control"><label>Desvio-padrão comum <span class="val" id="C-val-sd">10</span></label>
+            <input type="range" id="C-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
+          <div class="control"><label>Semente (seed) <span class="val" id="C-val-seed">42</span></label>
+            <input type="range" id="C-ctrl-seed" min="1" max="100" step="1" value="42"></div>
+          <div class="control checkbox-row"><input type="checkbox" id="C-ctrl-lognormal">
+            <div class="cb-text"><label for="C-ctrl-lognormal">Distribuição assimétrica</label>
+            <div class="hint">Testa violação de normalidade.</div></div></div>
+        </div>
+      </details>
       <div class="legend-note" id="C-legend"></div>
     </div>
     <div class="outputs">
@@ -246,7 +428,50 @@
       <div class="kolb-block"><div class="kolb-head"><div class="num">3</div><div><div class="title">Conceituação abstrata</div><div class="subtitle">os dados atendem à normalidade?</div></div></div>
         <div class="kolb-body"><div class="norm-grid" id="C-norm"></div><div class="recommend" id="C-recommend"></div></div></div>
       <div class="kolb-block"><div class="kolb-head"><div class="num">4</div><div><div class="title">Experimentação ativa</div><div class="subtitle">o resultado, formatado como aparece num artigo</div></div></div>
-        <div class="kolb-body"><div id="C-table"></div><p class="interp" id="C-interp" style="margin-top:14px"></p></div></div>
+        <div class="kolb-body">
+          <div class="predict-box" id="C-predictbox" data-locked="true">
+            <div class="q">Antes de ver o resultado: você acha que a variação (Δ) vai ser diferente entre os grupos, de forma significativa?</div>
+            <button class="predict-btn" data-page="C" data-guess="true">Sim, vai dar significativo</button>
+            <button class="predict-btn" data-page="C" data-guess="false">Não, não vai dar significativo</button>
+            <button class="predict-reveal-btn" id="C-reveal-btn" data-page="C">Ver resultado</button>
+          </div>
+          <div class="reveal-wrap" id="C-reveal-wrap" data-locked="true">
+            <button class="redo-predict" data-page="C">🔄 Mudei algo — fazer nova previsão</button>
+            <div id="C-predict-feedback"></div>
+            <div id="C-table"></div>
+            <p class="interp" id="C-interp" style="margin-top:14px"></p>
+            <div class="quiz-block">
+              <h4>Confira se você entendeu</h4>
+              <div class="quiz-q" data-correct="1">
+                <div class="qtext">1. Qual pergunta o teste ENTRE grupos (sobre o Δ) responde?</div>
+                <label class="opt"><input type="radio" name="C-q1" value="0"> Se cada grupo mudou sozinho, do basal à semana 12</label>
+                <label class="opt"><input type="radio" name="C-q1" value="1"> Se os grupos mudaram diferente um do outro</label>
+                <label class="opt"><input type="radio" name="C-q1" value="2"> Se a amostra é normal</label>
+                <label class="opt"><input type="radio" name="C-q1" value="3"> Se o valor basal já era diferente entre os grupos</label>
+                <div class="exp">O teste pareado (dentro do grupo) responde a primeira pergunta; a linha principal da tabela responde esta.</div>
+              </div>
+              <div class="quiz-q" data-correct="0">
+                <div class="qtext">2. Por que geramos Basal e Semana 12 com uma correlação (teste-reteste) em vez de dados totalmente independentes?</div>
+                <label class="opt"><input type="radio" name="C-q2" value="0"> Porque são as mesmas pessoas medidas duas vezes</label>
+                <label class="opt"><input type="radio" name="C-q2" value="1"> Só para complicar o cálculo</label>
+                <label class="opt"><input type="radio" name="C-q2" value="2"> Porque assim os dados ficam parecidos com log-normal</label>
+                <label class="opt"><input type="radio" name="C-q2" value="3"> Não há motivo estatístico — é só estética</label>
+                <div class="exp">Dados pareados são, por natureza, correlacionados — a mesma pessoa tende a manter sua posição relativa no grupo.</div>
+              </div>
+              <div class="quiz-q" data-correct="1">
+                <div class="qtext">3. Se a correlação teste-reteste for muito alta, o que tende a acontecer com o teste pareado (comparado a tratar os dados como independentes)?</div>
+                <label class="opt"><input type="radio" name="C-q3" value="0"> Fica menos poderoso</label>
+                <label class="opt"><input type="radio" name="C-q3" value="1"> Fica mais poderoso — mais fácil detectar diferença real</label>
+                <label class="opt"><input type="radio" name="C-q3" value="2"> Não muda nada</label>
+                <label class="opt"><input type="radio" name="C-q3" value="3"> O teste fica inválido</label>
+                <div class="exp">O pareamento remove a variação entre pessoas que se repete nos 2 momentos — sobra menos "ruído" para mascarar o efeito.</div>
+              </div>
+              <button class="quiz-check-btn" data-page="C">Verificar respostas</button>
+              <div class="quiz-result" id="C-quiz-result"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -622,6 +847,18 @@ const el = id => document.getElementById(id);
 function fmt(x,d=2){ return Number(x).toFixed(d); }
 function fmtP(p){ return p<0.0001 ? '<0,0001' : fmt(p,4); }
 function pClass(p){ return p<0.05 ? 'p-sig' : ''; }
+function term(label, tip){ return `<span class="term" data-tip="${tip}">${label}</span>`; }
+const TIP = {
+  ttest: 'Compara as médias de 2 grupos independentes. O número entre parênteses é o grau de liberdade (gl) — quanto da amostra ficou livre para estimar a variabilidade.',
+  mwu: 'Compara as medianas de 2 grupos independentes usando postos (ranks), não médias — não exige normalidade.',
+  anova: 'Compara as médias de 3+ grupos ao mesmo tempo. Os números entre parênteses são os graus de liberdade (entre grupos, dentro dos grupos).',
+  kw: 'Versão não paramétrica da ANOVA — compara medianas de 3+ grupos via postos. O número entre parênteses é o grau de liberdade (k−1).',
+  d: 'd de Cohen: a distância entre as médias dos 2 grupos, em unidades de desvio-padrão — "sinal ÷ ruído".',
+  r: 'r (rank-biserial): tamanho de efeito baseado em postos — equivalente ao d de Cohen para testes não paramétricos.',
+  eta2: 'η² (eta-quadrado): proporção da variância total explicada pelo grupo a que a pessoa pertence.',
+  eta2h: 'η²_H: versão do η² baseada em postos, usada com o Kruskal-Wallis.',
+};
+const officialSig = {};
 
 /* =========================================================
    GRÁFICOS (histograma multi-grupo, boxplot multi-grupo, espaguete)
@@ -784,18 +1021,19 @@ function updateA() {
     : `Pelo menos um grupo <b>não é compatível com normalidade</b> — o Mann-Whitney é o mais indicado aqui.`;
 
   const tt=welchTTest(descA,descB), d=cohenD(descA,descB), mw=mannWhitneyU(dataA,dataB);
+  officialSig.A = bothNormal ? (tt.p<0.05) : (mw.p<0.05);
 
   renderJournalTable('A-table', 'Tabela 1. Comparação entre grupos quanto à redução da PA sistólica (mmHg), 12 semanas.',
     ['Variável','Fármaco (n='+n+')','Placebo (n='+n+')','Teste','Estatística','p','Efeito'],
     [
-      { cells: ['Média (DP)', `${fmt(descA.mean)} (${fmt(descA.sd)})`, `${fmt(descB.mean)} (${fmt(descB.sd)})`, 'Teste t de Welch', `t(${fmt(tt.df,1)}) = ${fmt(tt.t,2)}`, {v:fmtP(tt.p), cls:pClass(tt.p)}, `d = ${fmt(d,2)} (${dLabel(d)})`],
+      { cells: ['Média (DP)', `${fmt(descA.mean)} (${fmt(descA.sd)})`, `${fmt(descB.mean)} (${fmt(descB.sd)})`, term('Teste t de Welch',TIP.ttest), `t(${fmt(tt.df,1)}) = ${fmt(tt.t,2)}`, {v:fmtP(tt.p), cls:pClass(tt.p)}, `${term('d',TIP.d)} = ${fmt(d,2)} (${dLabel(d)})`],
         detail: detailGrid([
           ['Normalidade — Fármaco', `W=${fmt(swA.W,3)}, p=${fmt(swA.p,3)}`],
           ['Normalidade — Placebo', `W=${fmt(swB.W,3)}, p=${fmt(swB.p,3)}`],
           ['IC 95% da diferença', `[${fmt(tt.ciLow,2)}, ${fmt(tt.ciHigh,2)}]`],
           ['gl (Welch-Satterthwaite)', fmt(tt.df,2)],
         ], 'Pressuposto do teste t: normalidade em cada grupo (ou n grande) e observações independentes. Não exige variâncias iguais (correção de Welch).') },
-      { cells: ['Mediana [Q1–Q3]', `${fmt(descA.median)} [${fmt(descA.q1)} a ${fmt(descA.q3)}]`, `${fmt(descB.median)} [${fmt(descB.q1)} a ${fmt(descB.q3)}]`, 'Mann-Whitney U', `U = ${fmt(mw.U1,1)}`, {v:fmtP(mw.p), cls:pClass(mw.p)}, `r = ${fmt(mw.r,2)} (${rLabel(mw.r)})`],
+      { cells: ['Mediana [Q1–Q3]', `${fmt(descA.median)} [${fmt(descA.q1)} a ${fmt(descA.q3)}]`, `${fmt(descB.median)} [${fmt(descB.q1)} a ${fmt(descB.q3)}]`, term('Mann-Whitney U',TIP.mwu), `U = ${fmt(mw.U1,1)}`, {v:fmtP(mw.p), cls:pClass(mw.p)}, `${term('r',TIP.r)} = ${fmt(mw.r,2)} (${rLabel(mw.r)})`],
         detail: detailGrid([
           ['Estatística Z', fmt(mw.z,3)],
           ['n Fármaco / n Placebo', `${n} / ${n}`],
@@ -843,17 +1081,18 @@ function updateB() {
     : `Pelo menos um grupo <b>não é compatível com normalidade</b> — o Kruskal-Wallis é o mais indicado aqui.`;
 
   const anova=oneWayAnova([data1,data2,data3]), kw=kruskalWallis([data1,data2,data3]);
+  officialSig.B = allNormal ? (anova.p<0.05) : (kw.p<0.05);
 
   renderJournalTable('B-table', 'Tabela 1. Comparação entre grupos quanto à redução da PA sistólica (mmHg), 12 semanas.',
     ['Variável','Dose baixa (n='+n+')','Dose alta (n='+n+')','Placebo (n='+n+')','Teste','Estatística','p','Efeito'],
     [
-      { cells: ['Média (DP)', `${fmt(desc1.mean)} (${fmt(desc1.sd)})`, `${fmt(desc2.mean)} (${fmt(desc2.sd)})`, `${fmt(desc3.mean)} (${fmt(desc3.sd)})`, 'ANOVA um fator', `F(${anova.df1},${anova.df2}) = ${fmt(anova.F,2)}`, {v:fmtP(anova.p), cls:pClass(anova.p)}, `η² = ${fmt(anova.eta2,3)} (${etaLabel(anova.eta2)})`],
+      { cells: ['Média (DP)', `${fmt(desc1.mean)} (${fmt(desc1.sd)})`, `${fmt(desc2.mean)} (${fmt(desc2.sd)})`, `${fmt(desc3.mean)} (${fmt(desc3.sd)})`, term('ANOVA um fator',TIP.anova), `F(${anova.df1},${anova.df2}) = ${fmt(anova.F,2)}`, {v:fmtP(anova.p), cls:pClass(anova.p)}, `${term('η²',TIP.eta2)} = ${fmt(anova.eta2,3)} (${etaLabel(anova.eta2)})`],
         detail: detailGrid([
           ['Normalidade — Dose baixa', `W=${fmt(sw1.W,3)}, p=${fmt(sw1.p,3)}`],
           ['Normalidade — Dose alta', `W=${fmt(sw2.W,3)}, p=${fmt(sw2.p,3)}`],
           ['Normalidade — Placebo', `W=${fmt(sw3.W,3)}, p=${fmt(sw3.p,3)}`],
         ], 'Se significativo, o teste global só diz que <i>algum</i> par difere — não qual. Um post-hoc (Tukey) seria o próximo passo.') },
-      { cells: ['Mediana [Q1–Q3]', `${fmt(desc1.median)} [${fmt(desc1.q1)} a ${fmt(desc1.q3)}]`, `${fmt(desc2.median)} [${fmt(desc2.q1)} a ${fmt(desc2.q3)}]`, `${fmt(desc3.median)} [${fmt(desc3.q1)} a ${fmt(desc3.q3)}]`, 'Kruskal-Wallis', `H(${kw.df}) = ${fmt(kw.H,2)}`, {v:fmtP(kw.p), cls:pClass(kw.p)}, `η²_H = ${fmt(kw.etaH,3)} (${etaLabel(kw.etaH)})`],
+      { cells: ['Mediana [Q1–Q3]', `${fmt(desc1.median)} [${fmt(desc1.q1)} a ${fmt(desc1.q3)}]`, `${fmt(desc2.median)} [${fmt(desc2.q1)} a ${fmt(desc2.q3)}]`, `${fmt(desc3.median)} [${fmt(desc3.q1)} a ${fmt(desc3.q3)}]`, term('Kruskal-Wallis',TIP.kw), `H(${kw.df}) = ${fmt(kw.H,2)}`, {v:fmtP(kw.p), cls:pClass(kw.p)}, `${term('η²_H',TIP.eta2h)} = ${fmt(kw.etaH,3)} (${etaLabel(kw.etaH)})`],
         detail: detailGrid([
           ['n total', n*3],
         ], 'Não exige normalidade — compara postos. Se significativo, um post-hoc (Dunn) seria o próximo passo para saber qual par difere.') },
@@ -906,18 +1145,19 @@ function updateC() {
   const wilcA=wilcoxonSignedRank(pairA.T1,pairA.T0), wilcB=wilcoxonSignedRank(pairB.T1,pairB.T0);
   const dzA=cohenDz(pairA.T1,pairA.T0), dzB=cohenDz(pairB.T1,pairB.T0);
   const ttDelta=welchTTest(descDA,descDB), dDelta=cohenD(descDA,descDB), mwDelta=mannWhitneyU(deltaA,deltaB);
+  officialSig.C = bothNormal ? (ttDelta.p<0.05) : (mwDelta.p<0.05);
 
   renderJournalTable('C-table', 'Tabela 1. PA sistólica (mmHg) no basal, na semana 12, e variação (Δ) entre grupos.',
     ['Variável','Fármaco (n='+n+')','Placebo (n='+n+')','Teste (entre grupos)','Estatística','p','Efeito'],
     [
-      { cells: ['Δ Média (DP) [basal→sem.12]', `${fmt(descDA.mean)} (${fmt(descDA.sd)})`, `${fmt(descDB.mean)} (${fmt(descDB.sd)})`, 'Teste t de Welch (sobre Δ)', `t(${fmt(ttDelta.df,1)}) = ${fmt(ttDelta.t,2)}`, {v:fmtP(ttDelta.p), cls:pClass(ttDelta.p)}, `d = ${fmt(dDelta,2)} (${dLabel(dDelta)})`],
+      { cells: ['Δ Média (DP) [basal→sem.12]', `${fmt(descDA.mean)} (${fmt(descDA.sd)})`, `${fmt(descDB.mean)} (${fmt(descDB.sd)})`, term('Teste t de Welch (sobre Δ)',TIP.ttest), `t(${fmt(ttDelta.df,1)}) = ${fmt(ttDelta.t,2)}`, {v:fmtP(ttDelta.p), cls:pClass(ttDelta.p)}, `${term('d',TIP.d)} = ${fmt(dDelta,2)} (${dLabel(dDelta)})`],
         detail: detailGrid([
           ['Basal — Fármaco / Placebo', `${fmt(mean(pairA.T0))} / ${fmt(mean(pairB.T0))} mmHg`],
           ['Semana 12 — Fármaco / Placebo', `${fmt(mean(pairA.T1))} / ${fmt(mean(pairB.T1))} mmHg`],
           ['Pareado — Fármaco (t)', `p=${fmtP(pairedTA.p)} (dz=${fmt(dzA,2)})`],
           ['Pareado — Placebo (t)', `p=${fmtP(pairedTB.p)} (dz=${fmt(dzB,2)})`],
         ], '"Pareado" responde "esse grupo mudou sozinho?" — pergunta diferente de "os grupos mudaram diferente um do outro?", que é o teste principal desta linha.') },
-      { cells: ['Δ Mediana [Q1–Q3]', `${fmt(descDA.median)} [${fmt(descDA.q1)} a ${fmt(descDA.q3)}]`, `${fmt(descDB.median)} [${fmt(descDB.q1)} a ${fmt(descDB.q3)}]`, 'Mann-Whitney U (sobre Δ)', `U = ${fmt(mwDelta.U1,1)}`, {v:fmtP(mwDelta.p), cls:pClass(mwDelta.p)}, `r = ${fmt(mwDelta.r,2)} (${rLabel(mwDelta.r)})`],
+      { cells: ['Δ Mediana [Q1–Q3]', `${fmt(descDA.median)} [${fmt(descDA.q1)} a ${fmt(descDA.q3)}]`, `${fmt(descDB.median)} [${fmt(descDB.q1)} a ${fmt(descDB.q3)}]`, term('Mann-Whitney U (sobre Δ)',TIP.mwu), `U = ${fmt(mwDelta.U1,1)}`, {v:fmtP(mwDelta.p), cls:pClass(mwDelta.p)}, `${term('r',TIP.r)} = ${fmt(mwDelta.r,2)} (${rLabel(mwDelta.r)})`],
         detail: detailGrid([
           ['Pareado — Fármaco (Wilcoxon)', `p=${fmtP(wilcA.p)} (r=${fmt(wilcA.r,2)})`],
           ['Pareado — Placebo (Wilcoxon)', `p=${fmtP(wilcB.p)} (r=${fmt(wilcB.r,2)})`],
@@ -947,6 +1187,122 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 ['A-ctrl-n','A-ctrl-sd','A-ctrl-seed','A-ctrl-lognormal','A-ctrl-mean1','A-ctrl-mean2'].forEach(id => el(id).addEventListener('input', updateA));
 ['B-ctrl-n','B-ctrl-sd','B-ctrl-seed','B-ctrl-lognormal','B-ctrl-mean1','B-ctrl-mean2','B-ctrl-mean3'].forEach(id => el(id).addEventListener('input', updateB));
 ['C-ctrl-n','C-ctrl-sd','C-ctrl-seed','C-ctrl-lognormal','C-ctrl-base','C-ctrl-effA','C-ctrl-effB','C-ctrl-corr'].forEach(id => el(id).addEventListener('input', updateC));
+
+/* =========================================================
+   PRESETS
+   ========================================================= */
+const PRESETS = {
+  A: {
+    big:   { n:40, sd:8,  seed:42, lognormal:false, mean1:16, mean2:5 },
+    small: { n:15, sd:13, seed:42, lognormal:false, mean1:7,  mean2:5 },
+    skew:  { n:30, sd:10, seed:42, lognormal:true,  mean1:9,  mean2:5 },
+  },
+  B: {
+    big:   { n:30, sd:7,  seed:42, lognormal:false, mean1:6, mean2:15, mean3:5 },
+    small: { n:12, sd:13, seed:42, lognormal:false, mean1:6, mean2:8,  mean3:5 },
+    skew:  { n:30, sd:10, seed:42, lognormal:true,  mean1:7, mean2:11, mean3:5 },
+  },
+  C: {
+    big:   { n:30, sd:7,  seed:42, lognormal:false, base:148, effA:20, effB:3, corr:0.7 },
+    small: { n:12, sd:14, seed:42, lognormal:false, base:148, effA:8,  effB:4, corr:0.3 },
+    skew:  { n:30, sd:10, seed:42, lognormal:true,  base:148, effA:14, effB:4, corr:0.65 },
+  },
+};
+const CTRL_KEYS = {
+  A: ['n','sd','seed','lognormal','mean1','mean2'],
+  B: ['n','sd','seed','lognormal','mean1','mean2','mean3'],
+  C: ['n','sd','seed','lognormal','base','effA','effB','corr'],
+};
+const UPDATE_FN = { A: updateA, B: updateB, C: updateC };
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page, preset = PRESETS[page][btn.dataset.preset];
+    CTRL_KEYS[page].forEach(k => {
+      const input = el(`${page}-ctrl-${k}`);
+      if (typeof preset[k] === 'boolean') input.checked = preset[k]; else input.value = preset[k];
+    });
+    resetPredict(page);
+    UPDATE_FN[page]();
+  });
+});
+
+/* =========================================================
+   PREVISÃO / TRAVA DE REVELAÇÃO
+   ========================================================= */
+const predictState = { A: {guess:null}, B: {guess:null}, C: {guess:null} };
+
+function resetPredict(page) {
+  predictState[page].guess = null;
+  el(`${page}-predictbox`).setAttribute('data-locked','true');
+  el(`${page}-reveal-wrap`).setAttribute('data-locked','true');
+  el(`${page}-predictbox`).querySelectorAll('.predict-btn').forEach(b=>b.classList.remove('chosen'));
+  el(`${page}-reveal-btn`).classList.remove('ready');
+  el(`${page}-predict-feedback`).innerHTML = '';
+}
+
+document.querySelectorAll('.predict-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page, guess = btn.dataset.guess === 'true';
+    predictState[page].guess = guess;
+    el(`${page}-predictbox`).querySelectorAll('.predict-btn').forEach(b=>b.classList.remove('chosen'));
+    btn.classList.add('chosen');
+    el(`${page}-reveal-btn`).classList.add('ready');
+  });
+});
+document.querySelectorAll('.predict-reveal-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page;
+    if (predictState[page].guess === null) return;
+    el(`${page}-predictbox`).setAttribute('data-locked','false');
+    el(`${page}-reveal-wrap`).setAttribute('data-locked','false');
+    const correct = predictState[page].guess === officialSig[page];
+    el(`${page}-predict-feedback`).innerHTML = `<div class="predict-feedback ${correct?'correct':'wrong'}">
+      ${correct ? '🎯 Sua previsão bateu com o resultado!' : '📌 Sua previsão não bateu com o resultado — vale olhar a tabela com atenção pra entender por quê.'}
+    </div>`;
+  });
+});
+document.querySelectorAll('.redo-predict').forEach(btn => {
+  btn.addEventListener('click', () => resetPredict(btn.dataset.page));
+});
+
+/* =========================================================
+   SINCRONIZAR SEED ENTRE AS 3 ABAS
+   ========================================================= */
+const syncToggle = el('sync-seed-toggle');
+function propagateSeed(fromPage) {
+  if (!syncToggle.checked) return;
+  const val = el(`${fromPage}-ctrl-seed`).value;
+  ['A','B','C'].filter(p=>p!==fromPage).forEach(p => {
+    el(`${p}-ctrl-seed`).value = val;
+    el(`${p}-val-seed`).textContent = val;
+    UPDATE_FN[p]();
+  });
+}
+['A','B','C'].forEach(p => el(`${p}-ctrl-seed`).addEventListener('input', () => propagateSeed(p)));
+syncToggle.addEventListener('change', () => { if (syncToggle.checked) propagateSeed('A'); });
+
+/* =========================================================
+   MINIQUIZ
+   ========================================================= */
+document.querySelectorAll('.quiz-check-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page;
+    const container = btn.closest('.quiz-block');
+    const questions = container.querySelectorAll('.quiz-q');
+    let correctCount = 0;
+    questions.forEach(q => {
+      const correct = q.dataset.correct;
+      const checked = q.querySelector('input[type="radio"]:checked');
+      q.classList.add('answered');
+      q.classList.remove('correct','wrong');
+      if (!checked) { q.classList.add('wrong'); return; }
+      if (checked.value === correct) { q.classList.add('correct'); correctCount++; }
+      else { q.classList.add('wrong'); }
+    });
+    el(`${page}-quiz-result`).innerHTML = `<b>${correctCount} de ${questions.length} corretas.</b> ${correctCount===questions.length ? 'Show de bola!' : 'Veja as explicações em vermelho/azul acima.'}`;
+  });
+});
 
 updateA(); updateB(); updateC();
 
