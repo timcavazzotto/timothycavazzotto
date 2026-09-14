@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Comparações Estatísticas</title>
+<style>
+  :root {
+    --blue: #3b6ea5; --blue-fill: rgba(59,110,165,0.28); --blue-fill-strong: rgba(59,110,165,0.55);
+    --gray: #6b6b6b; --gray-fill: rgba(107,107,107,0.24); --gray-fill-strong: rgba(107,107,107,0.5);
+    --gold: #a9822f; --gold-fill: rgba(169,130,47,0.26); --gold-fill-strong: rgba(169,130,47,0.5);
+    --ink: #1c1c1c; --paper: #ffffff; --panel: #fafafa; --line: #e2e2e2;
+    --sig: #b3452c; --nsig: #4d4d4d; --kolb: #3b6ea5; --radius: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:var(--paper); color:var(--ink);
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:15px; line-height:1.45; }
+  header { padding: 20px 28px 14px 28px; border-bottom: 1px solid var(--line); }
+  header h1 { margin:0 0 4px 0; font-size:21px; font-weight:600; letter-spacing:-0.01em; }
+  header p { margin:0; color:var(--gray); font-size:13.5px; }
+
+  .tabs { display:flex; border-bottom:1px solid var(--line); background:var(--panel); }
+  .tab-btn {
+    flex:1; padding:13px 16px; font-size:13.5px; font-weight:600; color:var(--gray);
+    background:none; border:none; border-right:1px solid var(--line); border-bottom:3px solid transparent;
+    cursor:pointer; font-family:inherit; text-align:left;
+  }
+  .tab-btn:last-child { border-right:none; }
+  .tab-btn .sub { display:block; font-weight:400; font-size:11.5px; margin-top:1px; }
+  .tab-btn.active { color:var(--ink); border-bottom-color:var(--kolb); background:white; }
+
+  .kolb-strip { display:flex; border-bottom:1px solid var(--line); background:#f4f6f9; }
+  .kolb-strip .kstep { flex:1; padding:7px 14px; font-size:11px; color:var(--gray); border-right:1px solid var(--line); text-align:center; }
+  .kolb-strip .kstep:last-child { border-right:none; }
+  .kolb-strip .kstep b { display:block; font-size:11.5px; color:var(--ink); }
+
+  .page { display:none; }
+  .page.active { display:block; }
+
+  main { display:grid; grid-template-columns:300px 1fr; gap:0; align-items:start; }
+  .controls { padding:20px 22px; border-right:1px solid var(--line); position:sticky; top:0; }
+  fieldset.ctrl-group { border:none; margin:0 0 6px 0; padding:12px 0 4px 0; border-top:1px solid var(--line); }
+  fieldset.ctrl-group:first-child { border-top:none; padding-top:0; }
+  fieldset.ctrl-group legend { font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--gray); padding:0; margin-bottom:6px; font-weight:600; }
+  .control { margin-bottom:16px; }
+  .control label { display:flex; justify-content:space-between; font-size:13.5px; font-weight:600; margin-bottom:3px; }
+  .control label span.val { font-weight:400; color:var(--blue); font-variant-numeric:tabular-nums; }
+  .control input[type="range"] { width:100%; accent-color:var(--blue); }
+  .control .hint { font-size:12px; color:var(--gray); margin-top:3px; }
+  .control.checkbox-row { display:flex; align-items:flex-start; gap:8px; }
+  .control.checkbox-row input { margin-top:3px; accent-color:var(--blue); }
+  .control.checkbox-row .cb-text label { font-weight:600; font-size:13.5px; margin:0; display:block; }
+  .legend-note { margin-top:20px; padding-top:14px; border-top:1px solid var(--line); font-size:12.5px; color:var(--gray); }
+  .legend-note .row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+  .swatch { width:11px; height:11px; border-radius:2px; flex-shrink:0; }
+
+  .outputs { padding:20px 26px 40px 26px; display:flex; flex-direction:column; gap:20px; }
+  .kolb-block { border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .kolb-head { background:var(--panel); padding:10px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:9px; }
+  .kolb-head .num { width:20px; height:20px; border-radius:50%; background:var(--kolb); color:white; font-size:11.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .kolb-head .title { font-size:13.5px; font-weight:700; color:var(--ink); }
+  .kolb-head .subtitle { font-size:12px; color:var(--gray); }
+  .kolb-body { padding:16px 18px; background:white; }
+
+  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .chart-cell canvas { width:100%; display:block; }
+  .chart-cell .chart-title { font-size:12px; color:var(--gray); margin-bottom:6px; }
+
+  .norm-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:10px; }
+  .norm-card { border:1px solid var(--line); border-radius:5px; padding:10px 12px; }
+  .norm-card .g { font-size:12px; color:var(--gray); margin-bottom:4px; }
+  .norm-card .w { font-size:13.5px; font-variant-numeric:tabular-nums; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:11.5px; font-weight:600; margin-top:4px; }
+  .badge.sig { background:rgba(179,69,44,0.12); color:var(--sig); }
+  .badge.nsig { background:rgba(0,0,0,0.06); color:var(--nsig); }
+  .recommend { font-size:13.5px; padding:10px 13px; border-radius:5px; background:#f4f7fb; border:1px solid #dce6f1; margin-top:10px; }
+
+  table.journal { width:100%; border-collapse:collapse; font-size:13px; }
+  table.journal caption { text-align:left; font-size:12px; color:var(--gray); margin-bottom:8px; font-style:italic; }
+  table.journal thead th {
+    text-align:left; font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:0.02em;
+    color:var(--ink); padding:7px 9px; border-top:2px solid var(--ink); border-bottom:1px solid var(--ink);
+    background:#fbfbfb;
+  }
+  table.journal thead th:last-child { width:34px; }
+  table.journal tbody td { padding:9px 9px; border-bottom:1px solid var(--line); vertical-align:top; font-variant-numeric:tabular-nums; }
+  table.journal tbody tr.main-row:last-of-type td { border-bottom:2px solid var(--ink); }
+  table.journal tbody td.var-name { font-variant-numeric:normal; font-weight:600; max-width:190px; }
+  table.journal .p-sig { font-weight:700; color:var(--sig); }
+  .info-btn {
+    width:22px; height:22px; border-radius:50%; border:1px solid #b9c4d0; background:white; color:var(--blue);
+    font-size:12px; font-style:italic; font-family:Georgia,serif; cursor:pointer; line-height:1;
+  }
+  .info-btn.active { background:var(--blue); color:white; border-color:var(--blue); }
+  tr.detail-row td { background:#f6f8fb; padding:12px 16px; border-bottom:1px solid var(--line); }
+  .detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 22px; font-size:12.5px; }
+  .detail-grid .dt { color:var(--gray); }
+  .detail-grid .dd { font-weight:600; }
+  .detail-note { grid-column:1/-1; font-size:12.5px; color:#444; margin-top:4px; padding-top:8px; border-top:1px dashed var(--line); }
+
+  .interp { font-size:14px; line-height:1.55; color:var(--ink); }
+  .interp strong { color:var(--blue); }
+
+  @media (max-width: 940px) {
+    main { grid-template-columns:1fr; }
+    .controls { border-right:none; border-bottom:1px solid var(--line); position:static; }
+    .charts-grid, .norm-grid { grid-template-columns:1fr; }
+    .tabs, .kolb-strip { flex-direction:column; }
+    .tab-btn, .kolb-strip .kstep { border-right:none; border-bottom:1px solid var(--line); }
+    table.journal { font-size:12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Simulador de Comparações Estatísticas</h1>
+  <p>Mesmo cenário clínico, três perguntas diferentes — e como cada uma aparece publicada num artigo.</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-page="A">Cenário A<span class="sub">2 grupos — Fármaco vs. Placebo</span></button>
+  <button class="tab-btn" data-page="B">Cenário B<span class="sub">3 grupos — 2 doses vs. Placebo</span></button>
+  <button class="tab-btn" data-page="C">Cenário C<span class="sub">2 grupos × 2 momentos</span></button>
+</div>
+
+<div class="kolb-strip">
+  <div class="kstep"><b>1 · Experiência concreta</b>a pergunta e o desenho</div>
+  <div class="kstep"><b>2 · Observação reflexiva</b>olhe a forma dos dados</div>
+  <div class="kstep"><b>3 · Conceituação abstrata</b>os pressupostos batem?</div>
+  <div class="kstep"><b>4 · Experimentação ativa</b>o resultado, como num artigo</div>
+</div>
+
+<!-- ======================= PÁGINA A ======================= -->
+<div class="page active" id="page-A">
+  <main>
+    <div class="controls">
+      <fieldset class="ctrl-group">
+        <legend>Amostra e ruído</legend>
+        <div class="control"><label>n por grupo <span class="val" id="A-val-n">25</span></label>
+          <input type="range" id="A-ctrl-n" min="5" max="300" step="5" value="25"></div>
+        <div class="control"><label>Desvio-padrão comum <span class="val" id="A-val-sd">10</span></label>
+          <input type="range" id="A-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
+        <div class="control"><label>Semente (seed) <span class="val" id="A-val-seed">42</span></label>
+          <input type="range" id="A-ctrl-seed" min="1" max="100" step="1" value="42"></div>
+        <div class="control checkbox-row"><input type="checkbox" id="A-ctrl-lognormal">
+          <div class="cb-text"><label for="A-ctrl-lognormal">Distribuição assimétrica</label>
+          <div class="hint">Testa violação de normalidade.</div></div></div>
+      </fieldset>
+      <fieldset class="ctrl-group">
+        <legend>Cenário A</legend>
+        <div class="control"><label>Média Fármaco — redução (mmHg) <span class="val" id="A-val-mean1">9.0</span></label>
+          <input type="range" id="A-ctrl-mean1" min="0" max="20" step="0.5" value="9"></div>
+        <div class="control"><label>Média Placebo — redução (mmHg) <span class="val" id="A-val-mean2">5.0</span></label>
+          <input type="range" id="A-ctrl-mean2" min="0" max="20" step="0.5" value="5"></div>
+      </fieldset>
+      <div class="legend-note" id="A-legend"></div>
+    </div>
+    <div class="outputs">
+      <div class="kolb-block"><div class="kolb-head"><div class="num">1</div><div><div class="title">Experiência concreta</div><div class="subtitle" id="A-summary"></div></div></div>
+        <div class="kolb-body" id="A-stage1"></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">2</div><div><div class="title">Observação reflexiva</div><div class="subtitle">olhe a forma dos dados antes de qualquer teste</div></div></div>
+        <div class="kolb-body"><div class="charts-grid" id="A-charts"></div></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">3</div><div><div class="title">Conceituação abstrata</div><div class="subtitle">os dados atendem à normalidade?</div></div></div>
+        <div class="kolb-body"><div class="norm-grid" id="A-norm"></div><div class="recommend" id="A-recommend"></div></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">4</div><div><div class="title">Experimentação ativa</div><div class="subtitle">o resultado, formatado como aparece num artigo</div></div></div>
+        <div class="kolb-body"><div id="A-table"></div><p class="interp" id="A-interp" style="margin-top:14px"></p></div></div>
+    </div>
+  </main>
+</div>
+
+<!-- ======================= PÁGINA B ======================= -->
+<div class="page" id="page-B">
+  <main>
+    <div class="controls">
+      <fieldset class="ctrl-group">
+        <legend>Amostra e ruído</legend>
+        <div class="control"><label>n por grupo <span class="val" id="B-val-n">25</span></label>
+          <input type="range" id="B-ctrl-n" min="5" max="300" step="5" value="25"></div>
+        <div class="control"><label>Desvio-padrão comum <span class="val" id="B-val-sd">10</span></label>
+          <input type="range" id="B-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
+        <div class="control"><label>Semente (seed) <span class="val" id="B-val-seed">42</span></label>
+          <input type="range" id="B-ctrl-seed" min="1" max="100" step="1" value="42"></div>
+        <div class="control checkbox-row"><input type="checkbox" id="B-ctrl-lognormal">
+          <div class="cb-text"><label for="B-ctrl-lognormal">Distribuição assimétrica</label>
+          <div class="hint">Testa violação de normalidade.</div></div></div>
+      </fieldset>
+      <fieldset class="ctrl-group">
+        <legend>Cenário B</legend>
+        <div class="control"><label>Dose baixa — redução (mmHg) <span class="val" id="B-val-mean1">7.0</span></label>
+          <input type="range" id="B-ctrl-mean1" min="0" max="20" step="0.5" value="7"></div>
+        <div class="control"><label>Dose alta — redução (mmHg) <span class="val" id="B-val-mean2">11.0</span></label>
+          <input type="range" id="B-ctrl-mean2" min="0" max="20" step="0.5" value="11"></div>
+        <div class="control"><label>Placebo — redução (mmHg) <span class="val" id="B-val-mean3">5.0</span></label>
+          <input type="range" id="B-ctrl-mean3" min="0" max="20" step="0.5" value="5"></div>
+      </fieldset>
+      <div class="legend-note" id="B-legend"></div>
+    </div>
+    <div class="outputs">
+      <div class="kolb-block"><div class="kolb-head"><div class="num">1</div><div><div class="title">Experiência concreta</div><div class="subtitle" id="B-summary"></div></div></div>
+        <div class="kolb-body" id="B-stage1"></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">2</div><div><div class="title">Observação reflexiva</div><div class="subtitle">olhe a forma dos dados antes de qualquer teste</div></div></div>
+        <div class="kolb-body"><div class="charts-grid" id="B-charts"></div></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">3</div><div><div class="title">Conceituação abstrata</div><div class="subtitle">os dados atendem à normalidade?</div></div></div>
+        <div class="kolb-body"><div class="norm-grid" id="B-norm"></div><div class="recommend" id="B-recommend"></div></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">4</div><div><div class="title">Experimentação ativa</div><div class="subtitle">o resultado, formatado como aparece num artigo</div></div></div>
+        <div class="kolb-body"><div id="B-table"></div><p class="interp" id="B-interp" style="margin-top:14px"></p></div></div>
+    </div>
+  </main>
+</div>
+
+<!-- ======================= PÁGINA C ======================= -->
+<div class="page" id="page-C">
+  <main>
+    <div class="controls">
+      <fieldset class="ctrl-group">
+        <legend>Amostra e ruído</legend>
+        <div class="control"><label>n por grupo <span class="val" id="C-val-n">25</span></label>
+          <input type="range" id="C-ctrl-n" min="5" max="300" step="5" value="25"></div>
+        <div class="control"><label>Desvio-padrão comum <span class="val" id="C-val-sd">10</span></label>
+          <input type="range" id="C-ctrl-sd" min="1" max="20" step="0.5" value="10"></div>
+        <div class="control"><label>Semente (seed) <span class="val" id="C-val-seed">42</span></label>
+          <input type="range" id="C-ctrl-seed" min="1" max="100" step="1" value="42"></div>
+        <div class="control checkbox-row"><input type="checkbox" id="C-ctrl-lognormal">
+          <div class="cb-text"><label for="C-ctrl-lognormal">Distribuição assimétrica</label>
+          <div class="hint">Testa violação de normalidade.</div></div></div>
+      </fieldset>
+      <fieldset class="ctrl-group">
+        <legend>Cenário C</legend>
+        <div class="control"><label>PAS basal comum (mmHg) <span class="val" id="C-val-base">148</span></label>
+          <input type="range" id="C-ctrl-base" min="120" max="170" step="1" value="148"></div>
+        <div class="control"><label>Redução — Fármaco (mmHg) <span class="val" id="C-val-effA">14.0</span></label>
+          <input type="range" id="C-ctrl-effA" min="0" max="25" step="0.5" value="14"></div>
+        <div class="control"><label>Redução — Placebo (mmHg) <span class="val" id="C-val-effB">4.0</span></label>
+          <input type="range" id="C-ctrl-effB" min="0" max="25" step="0.5" value="4"></div>
+        <div class="control"><label>Correlação teste-reteste <span class="val" id="C-val-corr">0.65</span></label>
+          <input type="range" id="C-ctrl-corr" min="0" max="0.95" step="0.05" value="0.65"></div>
+      </fieldset>
+      <div class="legend-note" id="C-legend"></div>
+    </div>
+    <div class="outputs">
+      <div class="kolb-block"><div class="kolb-head"><div class="num">1</div><div><div class="title">Experiência concreta</div><div class="subtitle" id="C-summary"></div></div></div>
+        <div class="kolb-body" id="C-stage1"></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">2</div><div><div class="title">Observação reflexiva</div><div class="subtitle">olhe a forma dos dados antes de qualquer teste</div></div></div>
+        <div class="kolb-body"><div class="charts-grid" id="C-charts"></div></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">3</div><div><div class="title">Conceituação abstrata</div><div class="subtitle">os dados atendem à normalidade?</div></div></div>
+        <div class="kolb-body"><div class="norm-grid" id="C-norm"></div><div class="recommend" id="C-recommend"></div></div></div>
+      <div class="kolb-block"><div class="kolb-head"><div class="num">4</div><div><div class="title">Experimentação ativa</div><div class="subtitle">o resultado, formatado como aparece num artigo</div></div></div>
+        <div class="kolb-body"><div id="C-table"></div><p class="interp" id="C-interp" style="margin-top:14px"></p></div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+
+/* =========================================================
+   NÚCLEO MATEMÁTICO (funções validadas contra scipy)
+   ========================================================= */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function makeNormalGenerator(rng) {
+  let spare = null;
+  return function () {
+    if (spare !== null) { const v = spare; spare = null; return v; }
+    let u1 = rng(); const u2 = rng();
+    if (u1 < 1e-12) u1 = 1e-12;
+    const r = Math.sqrt(-2 * Math.log(u1));
+    const z0 = r * Math.cos(2 * Math.PI * u2);
+    const z1 = r * Math.sin(2 * Math.PI * u2);
+    spare = z1;
+    return z0;
+  };
+}
+function invNormCDF(p) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
+             1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
+             6.680131188771972e+01, -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
+             -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
+             3.754408661907416e+00];
+  const plow = 0.02425, phigh = 1 - plow;
+  let q, r;
+  if (p < plow) { q = Math.sqrt(-2*Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= phigh) { q = p-0.5; r = q*q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else { q = Math.sqrt(-2*Math.log(1-p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+function normCDF(x) { return 0.5 * (1 + erf(x / Math.SQRT2)); }
+function erf(x) {
+  const sign = x < 0 ? -1 : 1; x = Math.abs(x);
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const t = 1/(1+p*x);
+  const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+function logGamma(x) {
+  const g = 7;
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+             771.32342877765313, -176.61502916214059, 12.507343278686905,
+             -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - logGamma(1 - x);
+  x -= 1; let a = c[0]; const t = x + g + 0.5;
+  for (let i = 1; i < g + 2; i++) a += c[i] / (x + i);
+  return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+}
+function betacf(x, a, b) {
+  const MAXIT=200, EPS=3e-9, FPMIN=1e-30;
+  const qab=a+b, qap=a+1, qam=a-1;
+  let c=1, d=1-qab*x/qap;
+  if (Math.abs(d)<FPMIN) d=FPMIN;
+  d=1/d; let h=d;
+  for (let m=1;m<=MAXIT;m++){
+    const m2=2*m;
+    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; const del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+function betai(x, a, b) {
+  if (x<=0) return 0; if (x>=1) return 1;
+  const bt = Math.exp(logGamma(a+b)-logGamma(a)-logGamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  if (x < (a+1)/(a+b+2)) return bt*betacf(x,a,b)/a;
+  return 1 - bt*betacf(1-x,b,a)/b;
+}
+function tTestPValue(t, df) { const x = df/(df+t*t); return betai(x, df/2, 0.5); }
+function tCritical(df, alpha) {
+  let lo=0, hi=1000;
+  for (let i=0;i<200;i++){ const mid=(lo+hi)/2; const p=tTestPValue(mid,df); if(p>alpha) lo=mid; else hi=mid; }
+  return (lo+hi)/2;
+}
+function fPValue(F, d1, d2) { const x = d2/(d2+d1*F); return betai(x, d2/2, d1/2); }
+
+// gama incompleta regularizada (Numerical Recipes) -> qui-quadrado
+function gser(a,x){
+  const ITMAX=200, EPS=3e-9; if (x<=0) return 0;
+  let ap=a, sum=1/a, del=sum;
+  for (let i=1;i<=ITMAX;i++){ ap+=1; del*=x/ap; sum+=del; if(Math.abs(del)<Math.abs(sum)*EPS) break; }
+  return sum*Math.exp(-x+a*Math.log(x)-logGamma(a));
+}
+function gcf(a,x){
+  const ITMAX=200, EPS=3e-9, FPMIN=1e-30;
+  let b=x+1-a, c=1/FPMIN, d=1/b, h=d;
+  for (let i=1;i<=ITMAX;i++){
+    const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=b+an/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; const del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return Math.exp(-x+a*Math.log(x)-logGamma(a))*h;
+}
+function gammap(a,x){ return (x < a+1) ? gser(a,x) : 1-gcf(a,x); }
+function chi2CDF(x, k) { if (x<=0) return 0; return gammap(k/2, x/2); }
+function chi2PValue(x, k) { return 1 - chi2CDF(x, k); }
+
+/* =========================================================
+   ESTATÍSTICA DESCRITIVA
+   ========================================================= */
+function mean(x){ return x.reduce((a,b)=>a+b,0)/x.length; }
+function sd(x){ const m=mean(x), n=x.length; return Math.sqrt(x.reduce((a,b)=>a+(b-m)*(b-m),0)/(n-1)); }
+function quantile(sorted,p){ const n=sorted.length, idx=(n-1)*p, lo=Math.floor(idx), hi=Math.ceil(idx);
+  if (lo===hi) return sorted[lo]; return sorted[lo]+(sorted[hi]-sorted[lo])*(idx-lo); }
+function median(sorted){ return quantile(sorted,0.5); }
+function describe(x){
+  const sorted=[...x].sort((a,b)=>a-b);
+  return { n:x.length, mean:mean(x), median:median(sorted), sd:sd(x),
+    q1:quantile(sorted,0.25), q3:quantile(sorted,0.75), min:sorted[0], max:sorted[sorted.length-1], sorted };
+}
+
+/* =========================================================
+   SHAPIRO-WILK (Royston, AS R94) — validado
+   ========================================================= */
+function shapiroWilk(x) {
+  const sorted=[...x].sort((a,b)=>a-b); const n=sorted.length;
+  const m=[]; for (let i=1;i<=n;i++) m.push(invNormCDF((i-0.375)/(n+0.25)));
+  const ssm=m.reduce((a,v)=>a+v*v,0); const rsn=1/Math.sqrt(n);
+  const a=new Array(n).fill(0);
+  const c_n=m[n-1]/Math.sqrt(ssm);
+  const a_n=-2.706056*rsn**5+4.434685*rsn**4-2.071190*rsn**3-0.147981*rsn**2+0.221157*rsn+c_n;
+  if (n<=5) {
+    a[n-1]=a_n; a[0]=-a_n;
+    const phi=(ssm-2*m[n-1]**2)/(1-2*a_n**2);
+    for (let i=1;i<n-1;i++) a[i]=m[i]/Math.sqrt(phi);
+  } else {
+    const c_n1=m[n-2]/Math.sqrt(ssm);
+    const a_n1=-3.582633*rsn**5+5.682633*rsn**4-1.752461*rsn**3-0.293762*rsn**2+0.042981*rsn+c_n1;
+    a[n-1]=a_n; a[n-2]=a_n1; a[0]=-a_n; a[1]=-a_n1;
+    const phi=(ssm-2*m[n-1]**2-2*m[n-2]**2)/(1-2*a_n**2-2*a_n1**2);
+    for (let i=2;i<n-2;i++) a[i]=m[i]/Math.sqrt(phi);
+  }
+  const xbar=mean(sorted);
+  let num=0; for (let i=0;i<n;i++) num+=a[i]*sorted[i]; num*=num;
+  const den=sorted.reduce((s,v)=>s+(v-xbar)*(v-xbar),0);
+  const W=num/den;
+  let mu,sigma,w;
+  if (n<=11){ const gamma=-2.273+0.459*n; w=-Math.log(gamma-Math.log(1-W));
+    mu=0.5440-0.39978*n+0.025054*n**2-0.0006714*n**3;
+    sigma=Math.exp(1.3822-0.77857*n+0.062767*n**2-0.0020322*n**3);
+  } else { const lnn=Math.log(n); w=Math.log(1-W);
+    mu=-1.5861-0.31082*lnn-0.083751*lnn**2+0.0038915*lnn**3;
+    sigma=Math.exp(-0.4803-0.082676*lnn+0.0030302*lnn**2);
+  }
+  const z=(w-mu)/sigma; const p=1-normCDF(z);
+  return { W, p: Math.max(0,Math.min(1,p)) };
+}
+
+/* =========================================================
+   RANQUEAMENTO (com empates) — base p/ testes não paramétricos
+   ========================================================= */
+function rankWithTies(vals) {
+  const n = vals.length;
+  const idx = vals.map((v,i)=>i).sort((a,b)=>vals[a]-vals[b]);
+  const ranks = new Array(n);
+  let i = 0;
+  while (i < n) {
+    let j = i;
+    while (j < n-1 && vals[idx[j+1]] === vals[idx[i]]) j++;
+    const avgRank = (i+j)/2 + 1;
+    for (let k=i;k<=j;k++) ranks[idx[k]] = avgRank;
+    i = j+1;
+  }
+  return ranks;
+}
+function tieCorrectionTerm(vals) {
+  const counts = {};
+  vals.forEach(v => counts[v] = (counts[v]||0)+1);
+  return Object.values(counts).reduce((s,t)=>s+(t**3-t),0);
+}
+
+/* =========================================================
+   TESTE T (independente/Welch e pareado) + COHEN'S D
+   ========================================================= */
+function welchTTest(descA, descB) {
+  const n1=descA.n, n2=descB.n, s1=descA.sd, s2=descB.sd;
+  const v1=s1*s1/n1, v2=s2*s2/n2;
+  const t=(descA.mean-descB.mean)/Math.sqrt(v1+v2);
+  const df=(v1+v2)**2/((v1*v1)/(n1-1)+(v2*v2)/(n2-1));
+  const p=tTestPValue(Math.abs(t), df);
+  const tc=tCritical(df,0.05);
+  const diff=descA.mean-descB.mean, se=Math.sqrt(v1+v2);
+  return { t, df, p, ciLow:diff-tc*se, ciHigh:diff+tc*se, diff };
+}
+function pairedTTest(x, y) {
+  const d = x.map((v,i)=>v-y[i]);
+  const n = d.length;
+  const md = mean(d), sdd = sd(d);
+  const se = sdd/Math.sqrt(n);
+  const t = md/se;
+  const df = n-1;
+  const p = tTestPValue(Math.abs(t), df);
+  const tc = tCritical(df, 0.05);
+  return { t, df, p, meanDiff: md, sdDiff: sdd, ciLow: md-tc*se, ciHigh: md+tc*se };
+}
+function cohenD(descA, descB) {
+  const n1=descA.n, n2=descB.n, s1=descA.sd, s2=descB.sd;
+  const sp = Math.sqrt(((n1-1)*s1*s1+(n2-1)*s2*s2)/(n1+n2-2));
+  return (descA.mean-descB.mean)/sp;
+}
+function cohenDz(x,y) {
+  const d = x.map((v,i)=>v-y[i]);
+  return mean(d)/sd(d);
+}
+function dLabel(d) {
+  const ad=Math.abs(d);
+  if (ad<0.2) return "negligenciável"; if (ad<0.5) return "pequeno"; if (ad<0.8) return "médio"; return "grande";
+}
+function rLabel(r) {
+  const ar=Math.abs(r);
+  if (ar<0.1) return "negligenciável"; if (ar<0.3) return "pequeno"; if (ar<0.5) return "médio"; return "grande";
+}
+function etaLabel(e) {
+  if (e<0.01) return "negligenciável"; if (e<0.06) return "pequeno"; if (e<0.14) return "médio"; return "grande";
+}
+
+/* =========================================================
+   MANN-WHITNEY U — validado contra scipy
+   ========================================================= */
+function mannWhitneyU(x, y) {
+  const all = x.concat(y);
+  const n1=x.length, n2=y.length, N=n1+n2;
+  const ranks = rankWithTies(all);
+  const R1 = ranks.slice(0,n1).reduce((a,b)=>a+b,0);
+  const U1 = R1 - n1*(n1+1)/2;
+  const U2 = n1*n2 - U1;
+  const tieTerm = tieCorrectionTerm(all);
+  const sigma2 = (n1*n2/12) * ((N+1) - tieTerm/(N*(N-1)));
+  const mu = n1*n2/2;
+  const sigma = Math.sqrt(sigma2);
+  let z;
+  if (U1 === mu) z = 0;
+  else z = (U1 - mu - Math.sign(U1-mu)*0.5) / sigma;
+  const p = 2*(1-normCDF(Math.abs(z)));
+  const rankBiserial = 1 - (2*U1)/(n1*n2); // efeito: positivo se grupo x tende a ranks maiores
+  return { U1, U2, z, p, r: rankBiserial };
+}
+
+/* =========================================================
+   KRUSKAL-WALLIS — validado contra scipy
+   ========================================================= */
+function kruskalWallis(groups) {
+  const all = [].concat(...groups);
+  const N = all.length;
+  const ranks = rankWithTies(all);
+  let idx = 0, H = 0;
+  for (const g of groups) {
+    const n = g.length;
+    const Rg = ranks.slice(idx, idx+n).reduce((a,b)=>a+b,0);
+    H += Rg*Rg/n;
+    idx += n;
+  }
+  H = 12/(N*(N+1))*H - 3*(N+1);
+  const tieTerm = tieCorrectionTerm(all);
+  const tieCorrection = 1 - tieTerm/(N**3-N);
+  const Hc = H/tieCorrection;
+  const k = groups.length;
+  const p = chi2PValue(Hc, k-1);
+  const etaH = (Hc - k + 1) / (N - k); // eta^2_H (Tomczak & Tomczak, 2014)
+  return { H: Hc, df: k-1, p, etaH: Math.max(0,etaH) };
+}
+
+/* =========================================================
+   WILCOXON SIGNED-RANK — validado contra scipy (sem correção de continuidade)
+   ========================================================= */
+function wilcoxonSignedRank(x, y) {
+  let d = x.map((v,i)=>v-y[i]).filter(v => v !== 0);
+  const n = d.length;
+  const absd = d.map(Math.abs);
+  const ranks = rankWithTies(absd);
+  let Wpos=0, Wneg=0;
+  d.forEach((v,i) => { if (v>0) Wpos+=ranks[i]; else Wneg+=ranks[i]; });
+  const W = Math.min(Wpos, Wneg);
+  const mu = n*(n+1)/4;
+  const tieTerm = tieCorrectionTerm(absd);
+  const sigma2 = n*(n+1)*(2*n+1)/24 - tieTerm/48;
+  const sigma = Math.sqrt(sigma2);
+  const z = (W - mu) / sigma;
+  const p = 2*(1-normCDF(Math.abs(z)));
+  const r = (Wpos - Wneg) / (Wpos + Wneg); // rank-biserial pareado
+  return { W, z, p, r, n };
+}
+
+/* =========================================================
+   ANOVA DE UM FATOR — validado contra scipy
+   ========================================================= */
+function oneWayAnova(groups) {
+  const all = [].concat(...groups);
+  const grandMean = mean(all);
+  const k = groups.length, N = all.length;
+  const ssBetween = groups.reduce((s,g)=>s+g.length*(mean(g)-grandMean)**2, 0);
+  const ssWithin = groups.reduce((s,g)=>{ const m=mean(g); return s+g.reduce((a,v)=>a+(v-m)*(v-m),0); }, 0);
+  const df1 = k-1, df2 = N-k;
+  const F = (ssBetween/df1)/(ssWithin/df2);
+  const p = fPValue(F, df1, df2);
+  const eta2 = ssBetween/(ssBetween+ssWithin);
+  return { F, df1, df2, p, eta2 };
+}
+
+/* =========================================================
+   GERAÇÃO DE DADOS
+   ========================================================= */
+function generateGroup(normalFn, n, targetMean, targetSD, logNormal) {
+  const data = [];
+  if (logNormal) {
+    const m = Math.max(targetMean, 0.5);
+    const sigma2 = Math.log(1 + (targetSD*targetSD)/(m*m));
+    const sigma = Math.sqrt(sigma2);
+    const mu = Math.log(m) - sigma2/2;
+    for (let i=0;i<n;i++) data.push(Math.exp(mu + sigma*normalFn()));
+  } else {
+    for (let i=0;i<n;i++) data.push(targetMean + targetSD*normalFn());
+  }
+  return data;
+}
+function generatePaired(normalFn, n, baseline, effect, sdVal, corr, logNormal) {
+  const T0 = [], T1 = [];
+  let mu0=0, sigma0=0, mu1=0, sigma1=0;
+  if (logNormal) {
+    const m0 = Math.max(baseline, 0.5), m1 = Math.max(baseline-effect, 0.5);
+    sigma0 = Math.sqrt(Math.log(1+(sdVal*sdVal)/(m0*m0)));
+    mu0 = Math.log(m0) - sigma0*sigma0/2;
+    sigma1 = Math.sqrt(Math.log(1+(sdVal*sdVal)/(m1*m1)));
+    mu1 = Math.log(m1) - sigma1*sigma1/2;
+  }
+  for (let i=0;i<n;i++) {
+    const z = normalFn(), e1 = normalFn();
+    const zCorr = corr*z + Math.sqrt(1-corr*corr)*e1;
+    if (logNormal) {
+      T0.push(Math.exp(mu0 + sigma0*z));
+      T1.push(Math.exp(mu1 + sigma1*zCorr));
+    } else {
+      T0.push(baseline + sdVal*z);
+      T1.push(baseline - effect + sdVal*zCorr);
+    }
+  }
+  return { T0, T1 };
+}
+
+
+/* LÓGICA DE APLICAÇÃO na próxima parte */
+function getCSS(varName) { return getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); }
+const el = id => document.getElementById(id);
+function fmt(x,d=2){ return Number(x).toFixed(d); }
+function fmtP(p){ return p<0.0001 ? '<0,0001' : fmt(p,4); }
+function pClass(p){ return p<0.05 ? 'p-sig' : ''; }
+
+/* =========================================================
+   GRÁFICOS (histograma multi-grupo, boxplot multi-grupo, espaguete)
+   ========================================================= */
+function kde(data, points, bandwidth) {
+  const n = data.length;
+  return points.map(x => { let s=0; for (const xi of data){ const u=(x-xi)/bandwidth; s+=Math.exp(-0.5*u*u)/Math.sqrt(2*Math.PI);} return s/(n*bandwidth); });
+}
+function silvermanBandwidth(data, sdVal){ const n=data.length; return 1.06*sdVal*Math.pow(n,-0.2); }
+
+function drawHistogramMulti(canvas, groups) {
+  const ctx=canvas.getContext('2d'); const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const padL=44,padR=14,padT=10,padB=28, plotW=W-padL-padR, plotH=H-padT-padB;
+  const all=[].concat(...groups.map(g=>g.data));
+  const xmin=Math.min(...all), xmax=Math.max(...all), xr=(xmax-xmin)||1;
+  const xlo=xmin-xr*0.06, xhi=xmax+xr*0.06, nbins=22, binw=(xhi-xlo)/nbins;
+  function histDensity(data){ const counts=new Array(nbins).fill(0);
+    for (const v of data){ let b=Math.floor((v-xlo)/binw); if(b<0)b=0; if(b>=nbins)b=nbins-1; counts[b]++; }
+    return counts.map(c=>c/(data.length*binw)); }
+  const densities=groups.map(g=>histDensity(g.data));
+  const ymax=Math.max(...densities.map(d=>Math.max(...d)))*1.15||1;
+  function xPix(v){ return padL+(v-xlo)/(xhi-xlo)*plotW; }
+  function yPix(v){ return padT+plotH-(v/ymax)*plotH; }
+  ctx.strokeStyle='#cfcfcf'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+  groups.forEach((g,gi)=>{ ctx.fillStyle=g.fill; const dens=densities[gi];
+    for (let i=0;i<nbins;i++){ const x0=xPix(xlo+i*binw), x1=xPix(xlo+(i+1)*binw), y0=yPix(dens[i]);
+      ctx.fillRect(x0,y0,Math.max(1,x1-x0-1),(padT+plotH)-y0); } });
+  groups.forEach(g=>{ const bw=silvermanBandwidth(g.data, sd(g.data)||1); const pts=[]; const steps=100;
+    for (let i=0;i<=steps;i++) pts.push(xlo+(xhi-xlo)*i/steps);
+    const dens=kde(g.data,pts,bw);
+    ctx.strokeStyle=g.color; ctx.lineWidth=2; ctx.beginPath();
+    pts.forEach((x,i)=>{ const px=xPix(x), py=yPix(dens[i]); if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); });
+    ctx.stroke(); });
+  ctx.fillStyle='#6b6b6b'; ctx.font='10.5px system-ui'; ctx.textAlign='center';
+  for (let i=0;i<=4;i++){ const v=xlo+(xhi-xlo)*i/4; ctx.fillText(v.toFixed(1), xPix(v), padT+plotH+16); }
+}
+function tukeyBox(sortedData,q1,q3){ const iqr=q3-q1, lowerFence=q1-1.5*iqr, upperFence=q3+1.5*iqr;
+  const inFence=sortedData.filter(v=>v>=lowerFence&&v<=upperFence);
+  const whiskerLow=inFence.length?Math.min(...inFence):sortedData[0];
+  const whiskerHigh=inFence.length?Math.max(...inFence):sortedData[sortedData.length-1];
+  const outliers=sortedData.filter(v=>v<lowerFence||v>upperFence);
+  return { whiskerLow, whiskerHigh, outliers }; }
+function drawBoxplotMulti(canvas, items) {
+  const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const padL=48,padR=20,padT=14,padB=30, plotW=W-padL-padR, plotH=H-padT-padB;
+  const boxes=items.map(it=>tukeyBox(it.desc.sorted,it.desc.q1,it.desc.q3));
+  const allVals=[]; boxes.forEach(b=>allVals.push(b.whiskerLow,b.whiskerHigh,...b.outliers));
+  items.forEach(it=>allVals.push(it.desc.mean));
+  let ymin=Math.min(...allVals), ymax=Math.max(...allVals); const yr=(ymax-ymin)||1; ymin-=yr*0.08; ymax+=yr*0.08;
+  function yPix(v){ return padT+plotH-(v-ymin)/(ymax-ymin)*plotH; }
+  ctx.strokeStyle='#cfcfcf'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+  const nG=items.length, boxW=Math.min(60,plotW/(nG*2.2)), step=plotW/(nG+1);
+  items.forEach((it,gi)=>{ const cx=padL+step*(gi+1); const box=boxes[gi], desc=it.desc;
+    ctx.strokeStyle=it.color; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(cx,yPix(box.whiskerHigh)); ctx.lineTo(cx,yPix(desc.q3)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,yPix(desc.q1)); ctx.lineTo(cx,yPix(box.whiskerLow)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-8,yPix(box.whiskerHigh)); ctx.lineTo(cx+8,yPix(box.whiskerHigh)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-8,yPix(box.whiskerLow)); ctx.lineTo(cx+8,yPix(box.whiskerLow)); ctx.stroke();
+    ctx.fillStyle=it.fill; const yQ3=yPix(desc.q3), yQ1=yPix(desc.q1);
+    ctx.fillRect(cx-boxW/2,yQ3,boxW,Math.max(1,yQ1-yQ3)); ctx.strokeRect(cx-boxW/2,yQ3,boxW,Math.max(1,yQ1-yQ3));
+    ctx.lineWidth=2.2; const yMed=yPix(desc.median);
+    ctx.beginPath(); ctx.moveTo(cx-boxW/2,yMed); ctx.lineTo(cx+boxW/2,yMed); ctx.stroke();
+    const yMean=yPix(desc.mean);
+    ctx.strokeStyle='#000'; ctx.lineWidth=1.3; ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.moveTo(cx,yMean-5); ctx.lineTo(cx+5,yMean); ctx.lineTo(cx,yMean+5); ctx.lineTo(cx-5,yMean); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle=it.color; box.outliers.forEach(v=>{ ctx.beginPath(); ctx.arc(cx,yPix(v),2.6,0,2*Math.PI); ctx.fill(); });
+    ctx.fillStyle='#6b6b6b'; ctx.font='11px system-ui'; ctx.textAlign='center';
+    ctx.fillText(it.label, cx, padT+plotH+18); });
+}
+function drawSpaghetti(canvas, series) {
+  const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const padL=48,padR=20,padT=14,padB=30, plotW=W-padL-padR, plotH=H-padT-padB;
+  const all=[].concat(...series.map(s=>s.T0),...series.map(s=>s.T1));
+  let ymin=Math.min(...all), ymax=Math.max(...all); const yr=(ymax-ymin)||1; ymin-=yr*0.08; ymax+=yr*0.08;
+  function yPix(v){ return padT+plotH-(v-ymin)/(ymax-ymin)*plotH; }
+  const x0=padL+plotW*0.28, x1=padL+plotW*0.72;
+  ctx.strokeStyle='#cfcfcf'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+  series.forEach(s=>{ ctx.strokeStyle=s.color; ctx.globalAlpha=0.35; ctx.lineWidth=1;
+    for (let i=0;i<s.T0.length;i++){ ctx.beginPath(); ctx.moveTo(x0,yPix(s.T0[i])); ctx.lineTo(x1,yPix(s.T1[i])); ctx.stroke(); }
+    ctx.globalAlpha=1; });
+  series.forEach(s=>{ ctx.fillStyle=s.color;
+    s.T0.forEach(v=>{ ctx.beginPath(); ctx.arc(x0,yPix(v),2.6,0,2*Math.PI); ctx.fill(); });
+    s.T1.forEach(v=>{ ctx.beginPath(); ctx.arc(x1,yPix(v),2.6,0,2*Math.PI); ctx.fill(); }); });
+  series.forEach(s=>{ ctx.strokeStyle=s.color; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(x0,yPix(mean(s.T0))); ctx.lineTo(x1,yPix(mean(s.T1))); ctx.stroke(); });
+  ctx.fillStyle='#6b6b6b'; ctx.font='11.5px system-ui'; ctx.textAlign='center';
+  ctx.fillText('Basal', x0, padT+plotH+18); ctx.fillText('Semana 12', x1, padT+plotH+18);
+}
+
+/* =========================================================
+   TABELA "ESTILO ARTIGO" com (i) expansível
+   ========================================================= */
+function renderJournalTable(containerId, caption, headers, rows) {
+  const container = el(containerId);
+  let html = `<table class="journal"><caption>${caption}</caption><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}<th></th></tr></thead><tbody>`;
+  rows.forEach((r,i) => {
+    html += `<tr class="main-row">${r.cells.map(c=>`<td class="${c.cls||''}">${c.v!==undefined?c.v:c}</td>`).join('')}<td><button class="info-btn" data-idx="${i}" data-container="${containerId}">i</button></td></tr>`;
+    html += `<tr class="detail-row" id="${containerId}-detail-${i}" style="display:none"><td colspan="${headers.length+1}">${r.detail}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  container.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.idx;
+      const row = el(`${containerId}-detail-${idx}`);
+      const hidden = row.style.display === 'none';
+      row.style.display = hidden ? 'table-row' : 'none';
+      btn.textContent = hidden ? '×' : 'i';
+      btn.classList.toggle('active', hidden);
+    });
+  });
+}
+function detailGrid(items, note) {
+  return `<div class="detail-grid">${items.map(it=>`<div><div class="dt">${it[0]}</div><div class="dd">${it[1]}</div></div>`).join('')}</div>${note?`<div class="detail-note">${note}</div>`:''}`;
+}
+function normCard(label, sw, color) {
+  const isNormal = sw.p > 0.05;
+  return `<div class="norm-card"><div class="g"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${color};margin-right:7px"></span>${label}</div>
+    <div class="w">W = ${fmt(sw.W,4)} &nbsp;·&nbsp; p = ${fmt(sw.p,4)}</div>
+    <span class="badge ${isNormal?'nsig':'sig'}">${isNormal?'compatível com normal':'incompatível com normal'}</span></div>`;
+}
+/* =========================================================
+   PÁGINA A — 2 grupos independentes
+   ========================================================= */
+function updateA() {
+  const n=parseInt(el('A-ctrl-n').value), sdVal=parseFloat(el('A-ctrl-sd').value), seed=parseInt(el('A-ctrl-seed').value);
+  const logNormal=el('A-ctrl-lognormal').checked;
+  const meanA=parseFloat(el('A-ctrl-mean1').value), meanB=parseFloat(el('A-ctrl-mean2').value);
+  el('A-val-n').textContent=n; el('A-val-sd').textContent=sdVal.toFixed(1); el('A-val-seed').textContent=seed;
+  el('A-val-mean1').textContent=meanA.toFixed(1); el('A-val-mean2').textContent=meanB.toFixed(1);
+
+  const blue=getCSS('--blue'), blueFill=getCSS('--blue-fill'), gray=getCSS('--gray'), grayFill=getCSS('--gray-fill');
+
+  const rngA=mulberry32(seed), normA=makeNormalGenerator(rngA);
+  const dataA=generateGroup(normA,n,meanA,sdVal,logNormal);
+  const rngB=mulberry32(seed+100000), normB=makeNormalGenerator(rngB);
+  const dataB=generateGroup(normB,n,meanB,sdVal,logNormal);
+  const descA=describe(dataA), descB=describe(dataB);
+  const swA=shapiroWilk(dataA), swB=shapiroWilk(dataB);
+  const bothNormal = swA.p>0.05 && swB.p>0.05;
+
+  el('A-summary').textContent='Um único momento, dois grupos independentes — Fármaco reduz mais a PA do que Placebo?';
+  el('A-stage1').innerHTML=`<p class="interp">Ensaio clínico randomizado, paralelo. Desfecho: <b>redução da PA sistólica (mmHg)</b> após 12 semanas, medida uma única vez por paciente. Pergunta: existe diferença entre <b>Fármaco</b> (n=${n}) e <b>Placebo</b> (n=${n})?</p>`;
+
+  el('A-charts').innerHTML = `<div class="chart-cell"><div class="chart-title">Histograma (densidade) com KDE</div><canvas id="A-c1" width="480" height="300"></canvas></div>
+    <div class="chart-cell"><div class="chart-title">Boxplots comparativos</div><canvas id="A-c2" width="480" height="300"></canvas></div>`;
+  drawHistogramMulti(el('A-c1'), [{data:dataA,color:blue,fill:blueFill},{data:dataB,color:gray,fill:grayFill}]);
+  drawBoxplotMulti(el('A-c2'), [{desc:descA,color:blue,fill:blueFill,label:'Fármaco'},{desc:descB,color:gray,fill:grayFill,label:'Placebo'}]);
+
+  el('A-norm').innerHTML = normCard('Fármaco',swA,blue) + normCard('Placebo',swB,gray);
+  el('A-recommend').innerHTML = bothNormal
+    ? `Os dois grupos são <b>compatíveis com normalidade</b> — o teste t independente é diretamente aplicável.`
+    : `Pelo menos um grupo <b>não é compatível com normalidade</b> — o Mann-Whitney é o mais indicado aqui.`;
+
+  const tt=welchTTest(descA,descB), d=cohenD(descA,descB), mw=mannWhitneyU(dataA,dataB);
+
+  renderJournalTable('A-table', 'Tabela 1. Comparação entre grupos quanto à redução da PA sistólica (mmHg), 12 semanas.',
+    ['Variável','Fármaco (n='+n+')','Placebo (n='+n+')','Teste','Estatística','p','Efeito'],
+    [
+      { cells: ['Média (DP)', `${fmt(descA.mean)} (${fmt(descA.sd)})`, `${fmt(descB.mean)} (${fmt(descB.sd)})`, 'Teste t de Welch', `t(${fmt(tt.df,1)}) = ${fmt(tt.t,2)}`, {v:fmtP(tt.p), cls:pClass(tt.p)}, `d = ${fmt(d,2)} (${dLabel(d)})`],
+        detail: detailGrid([
+          ['Normalidade — Fármaco', `W=${fmt(swA.W,3)}, p=${fmt(swA.p,3)}`],
+          ['Normalidade — Placebo', `W=${fmt(swB.W,3)}, p=${fmt(swB.p,3)}`],
+          ['IC 95% da diferença', `[${fmt(tt.ciLow,2)}, ${fmt(tt.ciHigh,2)}]`],
+          ['gl (Welch-Satterthwaite)', fmt(tt.df,2)],
+        ], 'Pressuposto do teste t: normalidade em cada grupo (ou n grande) e observações independentes. Não exige variâncias iguais (correção de Welch).') },
+      { cells: ['Mediana [Q1–Q3]', `${fmt(descA.median)} [${fmt(descA.q1)} a ${fmt(descA.q3)}]`, `${fmt(descB.median)} [${fmt(descB.q1)} a ${fmt(descB.q3)}]`, 'Mann-Whitney U', `U = ${fmt(mw.U1,1)}`, {v:fmtP(mw.p), cls:pClass(mw.p)}, `r = ${fmt(mw.r,2)} (${rLabel(mw.r)})`],
+        detail: detailGrid([
+          ['Estatística Z', fmt(mw.z,3)],
+          ['n Fármaco / n Placebo', `${n} / ${n}`],
+        ], 'Pressuposto: observações independentes. Não exige normalidade — compara postos (medianas), não médias. Indicado quando a normalidade é violada.') },
+    ]);
+
+  el('A-legend').innerHTML = `<div class="row"><span class="swatch" style="background:${blue}"></span>Fármaco</div><div class="row"><span class="swatch" style="background:${gray}"></span>Placebo</div>`;
+
+  const agree = (tt.p<0.05) === (mw.p<0.05);
+  el('A-interp').innerHTML = agree
+    ? `Os dois testes chegam à <strong>mesma conclusão</strong> (p paramétrico=${fmtP(tt.p)}, p não paramétrico=${fmtP(mw.p)}).`
+    : `Os dois testes <strong>discordam</strong> aqui (p paramétrico=${fmtP(tt.p)}, p não paramétrico=${fmtP(mw.p)}) — sinal de que a escolha do teste importa. Veja a normalidade acima.`;
+}
+
+/* =========================================================
+   PÁGINA B — 3 grupos independentes
+   ========================================================= */
+function updateB() {
+  const n=parseInt(el('B-ctrl-n').value), sdVal=parseFloat(el('B-ctrl-sd').value), seed=parseInt(el('B-ctrl-seed').value);
+  const logNormal=el('B-ctrl-lognormal').checked;
+  const m1=parseFloat(el('B-ctrl-mean1').value), m2=parseFloat(el('B-ctrl-mean2').value), m3=parseFloat(el('B-ctrl-mean3').value);
+  el('B-val-n').textContent=n; el('B-val-sd').textContent=sdVal.toFixed(1); el('B-val-seed').textContent=seed;
+  el('B-val-mean1').textContent=m1.toFixed(1); el('B-val-mean2').textContent=m2.toFixed(1); el('B-val-mean3').textContent=m3.toFixed(1);
+
+  const blue=getCSS('--blue'), blueFill=getCSS('--blue-fill'), gold=getCSS('--gold'), goldFill=getCSS('--gold-fill'), gray=getCSS('--gray'), grayFill=getCSS('--gray-fill');
+
+  const rng1=mulberry32(seed), n1f=makeNormalGenerator(rng1); const data1=generateGroup(n1f,n,m1,sdVal,logNormal);
+  const rng2=mulberry32(seed+100000), n2f=makeNormalGenerator(rng2); const data2=generateGroup(n2f,n,m2,sdVal,logNormal);
+  const rng3=mulberry32(seed+200000), n3f=makeNormalGenerator(rng3); const data3=generateGroup(n3f,n,m3,sdVal,logNormal);
+  const desc1=describe(data1), desc2=describe(data2), desc3=describe(data3);
+  const sw1=shapiroWilk(data1), sw2=shapiroWilk(data2), sw3=shapiroWilk(data3);
+  const allNormal = sw1.p>0.05 && sw2.p>0.05 && sw3.p>0.05;
+
+  el('B-summary').textContent='Um único momento, três grupos independentes — a resposta muda com a dose?';
+  el('B-stage1').innerHTML=`<p class="interp">Ensaio clínico randomizado, 3 braços paralelos. Desfecho: <b>redução da PA sistólica (mmHg)</b> após 12 semanas. Pergunta: existe diferença entre <b>Dose baixa</b>, <b>Dose alta</b> e <b>Placebo</b> (n=${n} cada)?</p>`;
+
+  el('B-charts').innerHTML = `<div class="chart-cell"><div class="chart-title">Histograma (densidade) com KDE</div><canvas id="B-c1" width="480" height="300"></canvas></div>
+    <div class="chart-cell"><div class="chart-title">Boxplots comparativos</div><canvas id="B-c2" width="480" height="300"></canvas></div>`;
+  drawHistogramMulti(el('B-c1'), [{data:data1,color:blue,fill:blueFill},{data:data2,color:gold,fill:goldFill},{data:data3,color:gray,fill:grayFill}]);
+  drawBoxplotMulti(el('B-c2'), [{desc:desc1,color:blue,fill:blueFill,label:'Dose baixa'},{desc:desc2,color:gold,fill:goldFill,label:'Dose alta'},{desc:desc3,color:gray,fill:grayFill,label:'Placebo'}]);
+
+  el('B-norm').innerHTML = normCard('Dose baixa',sw1,blue) + normCard('Dose alta',sw2,gold) + normCard('Placebo',sw3,gray);
+  el('B-recommend').innerHTML = allNormal
+    ? `Os três grupos são <b>compatíveis com normalidade</b> — a ANOVA de um fator é diretamente aplicável.`
+    : `Pelo menos um grupo <b>não é compatível com normalidade</b> — o Kruskal-Wallis é o mais indicado aqui.`;
+
+  const anova=oneWayAnova([data1,data2,data3]), kw=kruskalWallis([data1,data2,data3]);
+
+  renderJournalTable('B-table', 'Tabela 1. Comparação entre grupos quanto à redução da PA sistólica (mmHg), 12 semanas.',
+    ['Variável','Dose baixa (n='+n+')','Dose alta (n='+n+')','Placebo (n='+n+')','Teste','Estatística','p','Efeito'],
+    [
+      { cells: ['Média (DP)', `${fmt(desc1.mean)} (${fmt(desc1.sd)})`, `${fmt(desc2.mean)} (${fmt(desc2.sd)})`, `${fmt(desc3.mean)} (${fmt(desc3.sd)})`, 'ANOVA um fator', `F(${anova.df1},${anova.df2}) = ${fmt(anova.F,2)}`, {v:fmtP(anova.p), cls:pClass(anova.p)}, `η² = ${fmt(anova.eta2,3)} (${etaLabel(anova.eta2)})`],
+        detail: detailGrid([
+          ['Normalidade — Dose baixa', `W=${fmt(sw1.W,3)}, p=${fmt(sw1.p,3)}`],
+          ['Normalidade — Dose alta', `W=${fmt(sw2.W,3)}, p=${fmt(sw2.p,3)}`],
+          ['Normalidade — Placebo', `W=${fmt(sw3.W,3)}, p=${fmt(sw3.p,3)}`],
+        ], 'Se significativo, o teste global só diz que <i>algum</i> par difere — não qual. Um post-hoc (Tukey) seria o próximo passo.') },
+      { cells: ['Mediana [Q1–Q3]', `${fmt(desc1.median)} [${fmt(desc1.q1)} a ${fmt(desc1.q3)}]`, `${fmt(desc2.median)} [${fmt(desc2.q1)} a ${fmt(desc2.q3)}]`, `${fmt(desc3.median)} [${fmt(desc3.q1)} a ${fmt(desc3.q3)}]`, 'Kruskal-Wallis', `H(${kw.df}) = ${fmt(kw.H,2)}`, {v:fmtP(kw.p), cls:pClass(kw.p)}, `η²_H = ${fmt(kw.etaH,3)} (${etaLabel(kw.etaH)})`],
+        detail: detailGrid([
+          ['n total', n*3],
+        ], 'Não exige normalidade — compara postos. Se significativo, um post-hoc (Dunn) seria o próximo passo para saber qual par difere.') },
+    ]);
+
+  el('B-legend').innerHTML = `<div class="row"><span class="swatch" style="background:${blue}"></span>Dose baixa</div><div class="row"><span class="swatch" style="background:${gold}"></span>Dose alta</div><div class="row"><span class="swatch" style="background:${gray}"></span>Placebo</div>`;
+
+  const agree = (anova.p<0.05) === (kw.p<0.05);
+  el('B-interp').innerHTML = agree
+    ? `ANOVA e Kruskal-Wallis chegam à <strong>mesma conclusão</strong> (p paramétrico=${fmtP(anova.p)}, p não paramétrico=${fmtP(kw.p)}).`
+    : `ANOVA e Kruskal-Wallis <strong>discordam</strong> (p paramétrico=${fmtP(anova.p)}, p não paramétrico=${fmtP(kw.p)}) — verifique a normalidade acima.`;
+}
+
+/* =========================================================
+   PÁGINA C — 2 grupos × 2 momentos
+   ========================================================= */
+function updateC() {
+  const n=parseInt(el('C-ctrl-n').value), sdVal=parseFloat(el('C-ctrl-sd').value), seed=parseInt(el('C-ctrl-seed').value);
+  const logNormal=el('C-ctrl-lognormal').checked;
+  const base=parseFloat(el('C-ctrl-base').value), effA=parseFloat(el('C-ctrl-effA').value), effB=parseFloat(el('C-ctrl-effB').value), corr=parseFloat(el('C-ctrl-corr').value);
+  el('C-val-n').textContent=n; el('C-val-sd').textContent=sdVal.toFixed(1); el('C-val-seed').textContent=seed;
+  el('C-val-base').textContent=base.toFixed(0); el('C-val-effA').textContent=effA.toFixed(1); el('C-val-effB').textContent=effB.toFixed(1); el('C-val-corr').textContent=corr.toFixed(2);
+
+  const blue=getCSS('--blue'), blueFill=getCSS('--blue-fill'), gray=getCSS('--gray'), grayFill=getCSS('--gray-fill');
+
+  const rngA=mulberry32(seed), normA=makeNormalGenerator(rngA);
+  const pairA=generatePaired(normA,n,base,effA,sdVal,corr,logNormal);
+  const rngB=mulberry32(seed+100000), normB=makeNormalGenerator(rngB);
+  const pairB=generatePaired(normB,n,base,effB,sdVal,corr,logNormal);
+
+  const deltaA=pairA.T1.map((v,i)=>v-pairA.T0[i]), deltaB=pairB.T1.map((v,i)=>v-pairB.T0[i]);
+  const descDA=describe(deltaA), descDB=describe(deltaB);
+  const swDA=shapiroWilk(deltaA), swDB=shapiroWilk(deltaB);
+  const bothNormal = swDA.p>0.05 && swDB.p>0.05;
+
+  el('C-summary').textContent='Dois momentos, dois grupos — o Fármaco reduz mais a PA ao longo do tempo do que o Placebo?';
+  el('C-stage1').innerHTML=`<p class="interp">Ensaio clínico randomizado, mesmos pacientes medidos duas vezes: <b>Basal</b> e <b>Semana 12</b>. Desfecho: <b>PA sistólica (mmHg)</b>. Pergunta: a <b>variação (Δ)</b> ao longo do tempo é diferente entre Fármaco e Placebo (n=${n} cada)?</p>`;
+
+  el('C-charts').innerHTML = `<div class="chart-cell"><div class="chart-title">Trajetórias individuais (Basal → Semana 12)</div><canvas id="C-c1" width="480" height="300"></canvas></div>
+    <div class="chart-cell"><div class="chart-title">Boxplots da variação (Δ)</div><canvas id="C-c2" width="480" height="300"></canvas></div>`;
+  drawSpaghetti(el('C-c1'), [{T0:pairA.T0,T1:pairA.T1,color:blue,label:'Fármaco'},{T0:pairB.T0,T1:pairB.T1,color:gray,label:'Placebo'}]);
+  drawBoxplotMulti(el('C-c2'), [{desc:descDA,color:blue,fill:blueFill,label:'Δ Fármaco'},{desc:descDB,color:gray,fill:grayFill,label:'Δ Placebo'}]);
+
+  el('C-norm').innerHTML = normCard('Δ Fármaco (Sem.12–Basal)',swDA,blue) + normCard('Δ Placebo (Sem.12–Basal)',swDB,gray);
+  el('C-recommend').innerHTML = bothNormal
+    ? `A <b>variação (Δ)</b> em cada grupo é compatível com normalidade — o teste t é diretamente aplicável.`
+    : `A <b>variação (Δ)</b> em pelo menos um grupo não é compatível com normalidade — Wilcoxon/Mann-Whitney são mais indicados.`;
+
+  const pairedTA=pairedTTest(pairA.T1,pairA.T0), pairedTB=pairedTTest(pairB.T1,pairB.T0);
+  const wilcA=wilcoxonSignedRank(pairA.T1,pairA.T0), wilcB=wilcoxonSignedRank(pairB.T1,pairB.T0);
+  const dzA=cohenDz(pairA.T1,pairA.T0), dzB=cohenDz(pairB.T1,pairB.T0);
+  const ttDelta=welchTTest(descDA,descDB), dDelta=cohenD(descDA,descDB), mwDelta=mannWhitneyU(deltaA,deltaB);
+
+  renderJournalTable('C-table', 'Tabela 1. PA sistólica (mmHg) no basal, na semana 12, e variação (Δ) entre grupos.',
+    ['Variável','Fármaco (n='+n+')','Placebo (n='+n+')','Teste (entre grupos)','Estatística','p','Efeito'],
+    [
+      { cells: ['Δ Média (DP) [basal→sem.12]', `${fmt(descDA.mean)} (${fmt(descDA.sd)})`, `${fmt(descDB.mean)} (${fmt(descDB.sd)})`, 'Teste t de Welch (sobre Δ)', `t(${fmt(ttDelta.df,1)}) = ${fmt(ttDelta.t,2)}`, {v:fmtP(ttDelta.p), cls:pClass(ttDelta.p)}, `d = ${fmt(dDelta,2)} (${dLabel(dDelta)})`],
+        detail: detailGrid([
+          ['Basal — Fármaco / Placebo', `${fmt(mean(pairA.T0))} / ${fmt(mean(pairB.T0))} mmHg`],
+          ['Semana 12 — Fármaco / Placebo', `${fmt(mean(pairA.T1))} / ${fmt(mean(pairB.T1))} mmHg`],
+          ['Pareado — Fármaco (t)', `p=${fmtP(pairedTA.p)} (dz=${fmt(dzA,2)})`],
+          ['Pareado — Placebo (t)', `p=${fmtP(pairedTB.p)} (dz=${fmt(dzB,2)})`],
+        ], '"Pareado" responde "esse grupo mudou sozinho?" — pergunta diferente de "os grupos mudaram diferente um do outro?", que é o teste principal desta linha.') },
+      { cells: ['Δ Mediana [Q1–Q3]', `${fmt(descDA.median)} [${fmt(descDA.q1)} a ${fmt(descDA.q3)}]`, `${fmt(descDB.median)} [${fmt(descDB.q1)} a ${fmt(descDB.q3)}]`, 'Mann-Whitney U (sobre Δ)', `U = ${fmt(mwDelta.U1,1)}`, {v:fmtP(mwDelta.p), cls:pClass(mwDelta.p)}, `r = ${fmt(mwDelta.r,2)} (${rLabel(mwDelta.r)})`],
+        detail: detailGrid([
+          ['Pareado — Fármaco (Wilcoxon)', `p=${fmtP(wilcA.p)} (r=${fmt(wilcA.r,2)})`],
+          ['Pareado — Placebo (Wilcoxon)', `p=${fmtP(wilcB.p)} (r=${fmt(wilcB.r,2)})`],
+        ], 'Versão não paramétrica: compara a variação (Δ) via postos, sem exigir normalidade.') },
+    ]);
+
+  el('C-legend').innerHTML = `<div class="row"><span class="swatch" style="background:${blue}"></span>Fármaco</div><div class="row"><span class="swatch" style="background:${gray}"></span>Placebo</div>`;
+
+  const agree = (ttDelta.p<0.05) === (mwDelta.p<0.05);
+  el('C-interp').innerHTML = agree
+    ? `Os dois testes concordam sobre a <strong>diferença na variação entre grupos</strong> (p paramétrico=${fmtP(ttDelta.p)}, p não paramétrico=${fmtP(mwDelta.p)}).`
+    : `Os dois testes <strong>discordam</strong> sobre a diferença na variação entre grupos (p paramétrico=${fmtP(ttDelta.p)}, p não paramétrico=${fmtP(mwDelta.p)}) — verifique a normalidade da variação (Δ) acima.`;
+}
+
+/* =========================================================
+   NAVEGAÇÃO POR ABAS (páginas totalmente independentes)
+   ========================================================= */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    el('page-'+btn.dataset.page).classList.add('active');
+  });
+});
+
+['A-ctrl-n','A-ctrl-sd','A-ctrl-seed','A-ctrl-lognormal','A-ctrl-mean1','A-ctrl-mean2'].forEach(id => el(id).addEventListener('input', updateA));
+['B-ctrl-n','B-ctrl-sd','B-ctrl-seed','B-ctrl-lognormal','B-ctrl-mean1','B-ctrl-mean2','B-ctrl-mean3'].forEach(id => el(id).addEventListener('input', updateB));
+['C-ctrl-n','C-ctrl-sd','C-ctrl-seed','C-ctrl-lognormal','C-ctrl-base','C-ctrl-effA','C-ctrl-effB','C-ctrl-corr'].forEach(id => el(id).addEventListener('input', updateC));
+
+updateA(); updateB(); updateC();
+
+
+</script>
+</body>
+</html>
