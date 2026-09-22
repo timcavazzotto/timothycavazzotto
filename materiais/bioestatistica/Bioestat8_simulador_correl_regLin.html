@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de Correlação e Regressão Linear</title>
+<style>
+  :root{
+    --blue:#3b6ea5; --blue-fill:#3b6ea533; --gray:#6b6b6b; --gray-fill:#6b6b6b33;
+    --gold:#a9822f; --gold-fill:#a9822f33; --sig:#b3452c; --bg:#fafafa; --line:#ddd;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin:0; padding:0 0 60px 0; background:var(--bg); color:#222;
+  }
+  header{ padding:28px 32px 14px 32px; border-bottom:1px solid var(--line); background:#fff;}
+  header h1{ margin:0 0 4px 0; font-size:1.5rem; font-weight:600;}
+  header .subtitle{ margin:0; color:var(--gray); font-size:0.95rem;}
+
+  section{ max-width:1100px; margin:0 auto; padding:22px 32px;}
+  .scenario{ padding-top:20px; padding-bottom:6px; }
+  .scenario p{ font-size:0.98rem; line-height:1.5; color:#333; }
+
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:20px 24px; }
+  .panel h2{ margin-top:0; font-size:1.05rem; }
+  .setup-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .toggle-btn{ font-size:0.8rem; padding:6px 12px; white-space:nowrap; }
+  .controls-grid.collapsed{ display:none; }
+
+  .controls-grid{
+    display:grid; grid-template-columns: 1fr 1fr; gap:18px 32px; margin-top:10px;
+  }
+  @media (max-width:760px){ .controls-grid{ grid-template-columns:1fr; } }
+  .ctrl{ }
+  .ctrl label{ display:flex; justify-content:space-between; font-size:0.9rem; font-weight:600; }
+  .ctrl label .val{ font-weight:400; color:var(--blue); font-variant-numeric: tabular-nums; }
+  .ctrl input[type=range]{ width:100%; margin-top:4px; }
+  .ctrl .micro{ font-size:0.78rem; color:var(--gray); margin-top:2px; line-height:1.3; }
+  .ctrl-check{ display:flex; align-items:flex-start; gap:8px; }
+  .ctrl-check input{ margin-top:3px; }
+  .ctrl-check .micro{ margin-top:0; }
+
+  .kolb-block{ background:#fff; border:1px solid var(--line); border-radius:10px; margin-top:20px; padding:20px 24px 24px 24px; }
+  .kolb-head{
+    display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:0.03em;
+    color:var(--blue); background:var(--blue-fill); padding:3px 10px; border-radius:12px; margin-bottom:8px;
+  }
+  .kolb-block h2{ margin:2px 0 12px 0; font-size:1.1rem; }
+
+  .game-layout{ display:grid; grid-template-columns: 1fr 300px; gap:24px; align-items:start; }
+  @media (max-width:880px){ .game-layout{ grid-template-columns:1fr; } }
+  .game-canvas-wrap{ }
+  canvas{ width:100%; height:auto; border:1px solid var(--line); border-radius:6px; background:#fff; }
+  .layer-toggles{ display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-size:0.85rem; }
+  .layer-toggles label{ display:flex; align-items:center; gap:5px; cursor:pointer; }
+  .layer-toggles label.disabled{ color:#aaa; cursor:not-allowed; }
+
+  .game-controls{ display:flex; flex-direction:column; gap:14px; }
+  .sqr-readout{ font-size:0.9rem; background:#faf6ec; border:1px solid var(--gold-fill); border-radius:6px; padding:10px 12px; }
+  .sqr-readout .num{ font-weight:700; color:var(--gold); }
+  button{
+    font-family:inherit; font-size:0.88rem; padding:9px 14px; border-radius:6px;
+    border:1px solid var(--blue); background:var(--blue); color:#fff; cursor:pointer;
+  }
+  button:hover{ opacity:0.9; }
+  button.secondary{ background:#fff; color:var(--blue); }
+  .sqr-compare{ font-size:0.86rem; line-height:1.5; background:#eef3f8; border-radius:6px; padding:10px 12px; min-height:20px; }
+  .sqr-compare b{ color:var(--blue); }
+  .sqr-compare .gold{ color:var(--gold); font-weight:700; }
+  .sqr-compare .blue{ color:var(--blue); font-weight:700; }
+
+  .formula-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
+  @media (max-width:760px){ .formula-grid{ grid-template-columns:1fr; } }
+  .formula-box{ background:#20242b; color:#f2f0e8; border-radius:8px; padding:16px 18px; text-align:center; }
+  .formula-box .ftitle{ font-size:0.78rem; color:#b9c4d0; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.04em; }
+  .formula-box .fmath{ font-size:1.05rem; }
+  .frac{ display:inline-block; vertical-align:middle; text-align:center; }
+  .frac .num{ display:block; border-bottom:1px solid #f2f0e8; padding:0 6px 3px 6px; }
+  .frac .den{ display:block; padding:3px 6px 0 6px; }
+
+  table.stats-table{ width:100%; border-collapse:collapse; font-size:0.9rem; margin-bottom:18px; }
+  table.stats-table th, table.stats-table td{ border-bottom:1px solid var(--line); padding:7px 8px; text-align:left; }
+  table.stats-table th{ font-size:0.78rem; text-transform:uppercase; color:var(--gray); font-weight:600; }
+  table.stats-table td.num{ font-variant-numeric:tabular-nums; }
+  .sig-yes{ color:var(--sig); font-weight:700; }
+  .sig-no{ color:var(--gray); }
+
+  .magnitude-bar-wrap{ margin-bottom:20px; }
+  .magnitude-bar{ position:relative; height:34px; border-radius:6px; overflow:hidden; display:flex; border:1px solid #333; }
+  .magnitude-bar div.seg{ flex:1; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#fff; }
+  .magnitude-marker{ position:absolute; top:-8px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:9px solid #111; transform:translateX(-7px); }
+  .magnitude-labels{ display:flex; justify-content:space-between; font-size:0.75rem; color:var(--gray); margin-top:4px; }
+
+  .spearman-panel{ background:#f5f5f0; border-radius:8px; padding:14px 16px; font-size:0.88rem; line-height:1.5; }
+  .spearman-panel .row{ display:flex; justify-content:space-between; margin-bottom:4px; }
+  .spearman-panel .row b{ font-variant-numeric:tabular-nums; }
+
+  .interp-text{ font-size:0.95rem; line-height:1.55; background:#eef3f8; border-left:4px solid var(--blue); padding:12px 16px; border-radius:0 6px 6px 0; }
+  .hint{ font-size:0.85rem; color:var(--gray); margin-top:12px; }
+
+  .term{ border-bottom:1px dotted var(--blue); cursor:help; position:relative; }
+  .term:hover::after{
+    content: attr(data-tip); position:absolute; left:0; bottom:130%; width:230px;
+    background:#20242b; color:#fff; font-size:0.75rem; padding:8px 10px; border-radius:6px;
+    z-index:10; line-height:1.35; font-weight:400;
+  }
+
+  .quiz-section{ background:#fff; border:1px solid var(--line); border-radius:10px; margin-top:20px; padding:20px 24px; }
+  .quiz-q{ margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid #eee; }
+  .quiz-q:last-child{ border-bottom:none; margin-bottom:0; }
+  .quiz-q p.q{ font-weight:600; margin:0 0 8px 0; font-size:0.92rem; }
+  .quiz-opts label{ display:block; font-size:0.88rem; margin-bottom:5px; cursor:pointer; }
+  .quiz-check-btn{ margin-top:6px; }
+  .quiz-feedback{ margin-top:8px; font-size:0.85rem; padding:8px 10px; border-radius:6px; display:none; }
+  .quiz-feedback.correct{ background:#e7f3ea; color:#2b7a3d; display:block; }
+  .quiz-feedback.wrong{ background:#fbe9e6; color:var(--sig); display:block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Simulador de Correlação e Regressão Linear</h1>
+  <p class="subtitle">Aula de revisão — sono, lesão esportiva e o ajuste da reta</p>
+</header>
+
+<section class="scenario">
+  <p>Um médico do esporte acompanha <strong>horas de sono por noite</strong> (variável independente, X) e o
+  <strong>tempo de afastamento por lesão</strong> em dias (variável dependente, Y) de um grupo de atletas.
+  Existe uma relação linear entre as duas variáveis? Qual a força e a direção dessa relação — e o quanto ela
+  permite prever o desfecho?</p>
+</section>
+
+<section class="panel setup-panel">
+  <div class="setup-header">
+    <h2>Parâmetros do estudo simulado</h2>
+    <button type="button" class="secondary toggle-btn" id="toggleSetupBtn" aria-expanded="true">Retrair ▲</button>
+  </div>
+  <div class="controls-grid" id="setupControls">
+    <div class="ctrl">
+      <label>Tamanho da amostra (n) <span class="val" id="val-n">40</span></label>
+      <input type="range" id="ctrl-n" min="10" max="150" step="5" value="40">
+      <div class="micro">Número de atletas monitorados. Amostras pequenas produzem estimativas de r e da reta mais instáveis.</div>
+    </div>
+    <div class="ctrl">
+      <label>Correlação-alvo (ρ) <span class="val" id="val-rho">-0.70</span></label>
+      <input type="range" id="ctrl-rho" min="-0.95" max="0.95" step="0.05" value="-0.70">
+      <div class="micro">Força e direção da relação usada para gerar os dados. O valor observado na amostra (r) varia em torno dela.</div>
+    </div>
+    <div class="ctrl">
+      <label>Dispersão de Y (DP) <span class="val" id="val-sdy">12</span></label>
+      <input type="range" id="ctrl-sdy" min="3" max="25" step="1" value="12">
+      <div class="micro">Quanto os dias de afastamento variam entre atletas com o mesmo padrão de sono (ruído em torno da reta).</div>
+    </div>
+    <div class="ctrl">
+      <label>Semente aleatória <span class="val" id="val-seed">42</span></label>
+      <input type="range" id="ctrl-seed" min="1" max="100" step="1" value="42">
+      <div class="micro">Muda a amostra simulada sem mudar os parâmetros da população. Útil para ver a variação amostral.</div>
+    </div>
+    <div class="ctrl ctrl-check">
+      <input type="checkbox" id="ctrl-outlier">
+      <div><label style="font-weight:600;">Incluir um valor atípico (outlier)</label>
+      <div class="micro">Adiciona um atleta com combinação extrema de sono e afastamento, para observar o efeito de um único ponto sobre r e sobre a reta.</div></div>
+    </div>
+    <div class="ctrl ctrl-check">
+      <input type="checkbox" id="ctrl-nonlinear">
+      <div><label style="font-weight:600;">Relação não linear (curva, não reta)</label>
+      <div class="micro">Transforma a relação em uma curva monotônica. Observe o que acontece com <span class="term" data-tip="Mede apenas a força da relação LINEAR entre X e Y.">r de Pearson</span> e com <span class="term" data-tip="Baseado em postos (ranks); mede qualquer relação monotônica, linear ou não.">ρ de Spearman</span>.</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="kolb-block" id="kolbAB">
+  <div class="kolb-head">1–2 · EXPERIÊNCIA CONCRETA → OBSERVAÇÃO REFLEXIVA</div>
+  <h2>Construindo a reta: tente você mesmo</h2>
+  <div class="game-layout">
+    <div class="game-canvas-wrap">
+      <canvas id="mainCanvas" width="680" height="460"></canvas>
+      <div class="layer-toggles">
+        <label><input type="checkbox" id="layer-student" checked> Sua reta</label>
+        <label><input type="checkbox" id="layer-ols"> Reta de mínimos quadrados</label>
+        <label id="label-slope" class="disabled"><input type="checkbox" id="layer-slope" disabled> Triângulo de inclinação (Δy/Δx)</label>
+        <label><input type="checkbox" id="layer-resid"> Resíduos</label>
+      </div>
+    </div>
+    <div class="game-controls">
+      <div class="ctrl">
+        <label>Seu intercepto (b0) <span class="val" id="val-b0">25.0</span></label>
+        <input type="range" id="ctrl-b0" min="-100" max="200" step="1" value="25">
+      </div>
+      <div class="ctrl">
+        <label>Sua inclinação (b1) <span class="val" id="val-b1">-3.0</span></label>
+        <input type="range" id="ctrl-b1" min="-40" max="40" step="0.2" value="-3">
+      </div>
+      <div class="sqr-readout">
+        Soma dos quadrados dos resíduos (SQR) da sua reta:<br>
+        <span class="num" id="sqrStudent">–</span>
+      </div>
+      <button id="revealBtn">Revelar a reta de mínimos quadrados</button>
+      <div class="sqr-compare" id="sqrCompare"></div>
+    </div>
+  </div>
+</section>
+
+<section class="kolb-block" id="kolbC">
+  <div class="kolb-head">3 · CONCEITUAÇÃO ABSTRATA</div>
+  <h2>A fórmula por trás da reta</h2>
+  <div class="formula-grid">
+    <div class="formula-box">
+      <div class="ftitle">Coeficiente de correlação de Pearson (r)</div>
+      <div class="fmath">r = <span class="frac"><span class="num">Σ(X−X̄)(Y−Ȳ)</span><span class="den">√[Σ(X−X̄)² · Σ(Y−Ȳ)²]</span></span></div>
+    </div>
+    <div class="formula-box">
+      <div class="ftitle">Inclinação da reta de regressão (b1)</div>
+      <div class="fmath">b1 = <span class="frac"><span class="num">Σ(X−X̄)(Y−Ȳ)</span><span class="den">Σ(X−X̄)²</span></span></div>
+    </div>
+  </div>
+
+  <table class="stats-table">
+    <thead><tr><th>Medida</th><th>Valor</th><th>Interpretação</th></tr></thead>
+    <tbody>
+      <tr><td>n</td><td class="num" id="s-n">–</td><td>Tamanho da amostra</td></tr>
+      <tr><td><span class="term" data-tip="Varia de -1 a +1. Mede força e direção da relação LINEAR.">r de Pearson</span> (IC 95%)</td><td class="num" id="s-r">–</td><td id="s-r-label">–</td></tr>
+      <tr><td><span class="term" data-tip="Proporção da variação de Y explicada pela reta de regressão.">R²</span></td><td class="num" id="s-r2">–</td><td id="s-r2-label">–</td></tr>
+      <tr><td>Equação da reta</td><td class="num" id="s-eq" colspan="2">–</td></tr>
+      <tr><td>Inclinação (b1), IC 95%</td><td class="num" id="s-b1">–</td><td>Variação de Y para cada unidade de X</td></tr>
+      <tr><td>Teste t da inclinação</td><td class="num" id="s-t">–</td><td>H0: b1 = 0 (X não prevê Y)</td></tr>
+      <tr><td>p-valor</td><td class="num" id="s-p">–</td><td id="s-p-label">–</td></tr>
+    </tbody>
+  </table>
+
+  <div class="magnitude-bar-wrap">
+    <div style="font-size:0.85rem; font-weight:600; margin-bottom:6px;">Magnitude do r observado</div>
+    <div style="position:relative;">
+      <div class="magnitude-bar">
+        <div class="seg" style="background:#b3452c;">Forte</div>
+        <div class="seg" style="background:#c97a5c;">Moderada</div>
+        <div class="seg" style="background:#7fa8c9;">Fraca</div>
+        <div class="seg" style="background:#7fa8c9;">Fraca</div>
+        <div class="seg" style="background:#c97a5c;">Moderada</div>
+        <div class="seg" style="background:#b3452c;">Forte</div>
+      </div>
+      <div class="magnitude-marker" id="magMarker" style="left:50%;"></div>
+    </div>
+    <div class="magnitude-labels"><span>-1</span><span>-0,5</span><span>0</span><span>+0,5</span><span>+1</span></div>
+  </div>
+
+  <div class="spearman-panel">
+    <div class="row"><span><span class="term" data-tip="Correlação calculada sobre os POSTOS (ranks) dos dados, não sobre os valores brutos.">ρ de Spearman</span> (contraparte não paramétrica)</span><b id="s-spearman">–</b></div>
+    <div class="row"><span>p-valor (Spearman)</span><b id="s-spearman-p">–</b></div>
+    <div style="margin-top:8px; color:var(--gray);">Prefira Spearman quando a relação for monotônica mas não linear, quando houver valores atípicos influentes, ou quando as variáveis forem ordinais.</div>
+  </div>
+</section>
+
+<section class="kolb-block" id="kolbD">
+  <div class="kolb-head">4 · EXPERIMENTAÇÃO ATIVA</div>
+  <h2>Interprete e explore</h2>
+  <p class="interp-text" id="interpText">–</p>
+  <p class="hint">Volte aos parâmetros no topo da página: aumente ou diminua n, mude a correlação-alvo, ative o valor atípico
+  ou a relação não linear — e observe o que muda (r, b1, p-valor) e o que se mantém (a lógica de mínimos quadrados).</p>
+</section>
+
+<section class="quiz-section">
+  <h2>Verifique seu entendimento</h2>
+
+  <div class="quiz-q">
+    <p class="q">1. A reta de mínimos quadrados é aquela que...</p>
+    <div class="quiz-opts" data-correct="b">
+      <label><input type="radio" name="q1" value="a"> passa pelo maior número possível de pontos.</label>
+      <label><input type="radio" name="q1" value="b"> minimiza a soma dos quadrados das distâncias verticais entre os pontos e a reta.</label>
+      <label><input type="radio" name="q1" value="c"> maximiza o coeficiente de correlação de Pearson.</label>
+    </div>
+    <button class="quiz-check-btn" data-q="q1">Verificar</button>
+    <div class="quiz-feedback" id="fb-q1"></div>
+  </div>
+
+  <div class="quiz-q">
+    <p class="q">2. Se r = 0 entre X e Y, é correto concluir que não existe nenhuma relação entre as duas variáveis?</p>
+    <div class="quiz-opts" data-correct="b">
+      <label><input type="radio" name="q2" value="a"> Sim, r = 0 significa ausência total de relação.</label>
+      <label><input type="radio" name="q2" value="b"> Não — r mede apenas relação linear; pode haver uma relação não linear forte mesmo com r próximo de zero.</label>
+      <label><input type="radio" name="q2" value="c"> Sim, mas apenas se n for grande.</label>
+    </div>
+    <button class="quiz-check-btn" data-q="q2">Verificar</button>
+    <div class="quiz-feedback" id="fb-q2"></div>
+  </div>
+
+  <div class="quiz-q">
+    <p class="q">3. Um único atleta com valores muito extremos de sono e afastamento (outlier) tende a...</p>
+    <div class="quiz-opts" data-correct="a">
+      <label><input type="radio" name="q3" value="a"> ter grande influência sobre r e sobre a inclinação da reta, especialmente em amostras pequenas.</label>
+      <label><input type="radio" name="q3" value="b"> não ter nenhum efeito, pois é apenas um ponto entre muitos.</label>
+      <label><input type="radio" name="q3" value="c"> afetar apenas o R², nunca a inclinação (b1).</label>
+    </div>
+    <button class="quiz-check-btn" data-q="q3">Verificar</button>
+    <div class="quiz-feedback" id="fb-q3"></div>
+  </div>
+</section>
+
+<script>
+/* ===================== PRNG e geração de números aleatórios ===================== */
+function mulberry32(seed){
+  let t = seed >>> 0;
+  return function(){
+    t += 0x6D2B79F5;
+    let x = t;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function makeNormalGenerator(rng){
+  let spare = null;
+  return function(){
+    if(spare !== null){ const v = spare; spare = null; return v; }
+    let u1, u2;
+    do { u1 = rng(); } while(u1 <= 1e-12);
+    u2 = rng();
+    const mag = Math.sqrt(-2*Math.log(u1));
+    const z0 = mag*Math.cos(2*Math.PI*u2);
+    const z1 = mag*Math.sin(2*Math.PI*u2);
+    spare = z1;
+    return z0;
+  };
+}
+
+/* ===================== Funções estatísticas validadas ===================== */
+function mean(a){ return a.reduce((s,v)=>s+v,0)/a.length; }
+function sd(a){ const m=mean(a); return Math.sqrt(a.reduce((s,v)=>s+(v-m)*(v-m),0)/(a.length-1)); }
+
+function logGamma(x){
+  const g=7;
+  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,
+           -176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5) return Math.log(Math.PI/Math.sin(Math.PI*x)) - logGamma(1-x);
+  x -= 1;
+  let a=c[0];
+  const t=x+g+0.5;
+  for(let i=1;i<g+2;i++) a += c[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI) + (x+0.5)*Math.log(t) - t + Math.log(a);
+}
+function betacf(x,a,b){
+  const MAXIT=200, EPS=3e-9, FPMIN=1e-30;
+  const qab=a+b, qap=a+1, qam=a-1;
+  let c=1, d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN) d=FPMIN;
+  d=1/d; let h=d;
+  for(let m=1;m<=MAXIT;m++){
+    const m2=2*m;
+    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN;
+    d=1/d; const del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+function betai(x,a,b){
+  if(x<=0) return 0;
+  if(x>=1) return 1;
+  const bt=Math.exp(logGamma(a+b)-logGamma(a)-logGamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  if(x < (a+1)/(a+b+2)) return bt*betacf(x,a,b)/a;
+  return 1 - bt*betacf(1-x,b,a)/b;
+}
+function tCDF(t,df){
+  const x = df/(df+t*t);
+  const p = 0.5*betai(x, df/2, 0.5);
+  return t>0 ? 1-p : p;
+}
+function tPValueTwoSided(t,df){
+  return 2*(1 - tCDF(Math.abs(t), df));
+}
+function tCritical(df, alpha){
+  let lo=0, hi=100;
+  for(let i=0;i<100;i++){
+    const mid=(lo+hi)/2;
+    const p=tPValueTwoSided(mid, df);
+    if(p>alpha) lo=mid; else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+function rankAvg(arr){
+  const idx = arr.map((v,i)=>i).sort((a,b)=>arr[a]-arr[b]);
+  const ranks = new Array(arr.length);
+  let i=0;
+  while(i<idx.length){
+    let j=i;
+    while(j+1<idx.length && arr[idx[j+1]]===arr[idx[i]]) j++;
+    const avgRank = (i+j)/2 + 1;
+    for(let k=i;k<=j;k++) ranks[idx[k]] = avgRank;
+    i = j+1;
+  }
+  return ranks;
+}
+
+function pearson(X,Y){
+  const n=X.length;
+  const xbar=mean(X), ybar=mean(Y);
+  let sxy=0, sxx=0, syy=0;
+  for(let i=0;i<n;i++){
+    sxy += (X[i]-xbar)*(Y[i]-ybar);
+    sxx += (X[i]-xbar)*(X[i]-xbar);
+    syy += (Y[i]-ybar)*(Y[i]-ybar);
+  }
+  return { r: sxy/Math.sqrt(sxx*syy), sxy, sxx, syy, xbar, ybar };
+}
+
+function olsFit(X,Y){
+  const n=X.length;
+  const P = pearson(X,Y);
+  const b1 = P.sxy/P.sxx;
+  const b0 = P.ybar - b1*P.xbar;
+  let sse=0;
+  for(let i=0;i<n;i++){ const yhat=b0+b1*X[i]; sse += (Y[i]-yhat)*(Y[i]-yhat); }
+  const sst = P.syy;
+  const r2 = 1 - sse/sst;
+  const df = n-2;
+  const mse = sse/df;
+  const seB1 = Math.sqrt(mse/P.sxx);
+  const tStat = b1/seB1;
+  const pValue = tPValueTwoSided(tStat, df);
+  const tcrit = tCritical(df, 0.05);
+  const b1lo = b1 - tcrit*seB1, b1hi = b1 + tcrit*seB1;
+  const zr = Math.atanh(Math.max(-0.999999, Math.min(0.999999, P.r)));
+  const seZ = 1/Math.sqrt(n-3);
+  const rlo = Math.tanh(zr - 1.96*seZ), rhi = Math.tanh(zr + 1.96*seZ);
+  return { n, xbar:P.xbar, ybar:P.ybar, r:P.r, rlo, rhi, b0, b1, b1lo, b1hi, r2, sse, sst, tStat, df, pValue };
+}
+
+function spearman(X,Y){
+  const rx = rankAvg(X), ry = rankAvg(Y);
+  const P = pearson(rx, ry);
+  const n = X.length, df = n-2;
+  const rho = P.r;
+  const t = rho * Math.sqrt(df/(1-rho*rho));
+  const p = tPValueTwoSided(t, df);
+  return { rho, p };
+}
+
+function sumSqResid(X,Y,b0,b1){
+  let s=0;
+  for(let i=0;i<X.length;i++){ const e=Y[i]-(b0+b1*X[i]); s+=e*e; }
+  return s;
+}
+
+/* ===================== Geração de dados do cenário ===================== */
+function generateData(n, rhoTarget, sdY, seed, outlier, nonlinear){
+  const meanX=7.0, sdX=1.3, meanY=25.0;
+  const rng = mulberry32(seed);
+  const randN = makeNormalGenerator(rng);
+  const z=[], w=[];
+  for(let i=0;i<n;i++){
+    const zi = randN();
+    const noise = randN();
+    const v = rhoTarget*zi + Math.sqrt(Math.max(0,1-rhoTarget*rhoTarget))*noise;
+    z.push(zi); w.push(v);
+  }
+  let finalW = w;
+  if(nonlinear){
+    const transformed = w.map(v => Math.sign(v)*(Math.exp(1.4*Math.abs(v)) - 1));
+    const m = mean(transformed), s = sd(transformed) || 1;
+    finalW = transformed.map(t => (t-m)/s);
+  }
+  const X=[], Y=[];
+  for(let i=0;i<n;i++){
+    X.push(meanX + sdX*z[i]);
+    Y.push(Math.max(0, meanY + sdY*finalW[i]));
+  }
+  if(outlier){
+    X.push(meanX + 2.8*sdX);
+    Y.push(Math.max(0, meanY + 2.8*sdY));
+  }
+  return {X, Y};
+}
+
+/* ===================== Estado ===================== */
+let DATA = {X:[], Y:[]};
+let STATS = null;
+let SPEAR = null;
+let revealedOLS = false;
+
+/* ===================== Desenho do canvas principal ===================== */
+function niceRange(minV, maxV){
+  const pad = (maxV-minV)*0.08 || Math.max(1, Math.abs(maxV)*0.1) || 1;
+  return [minV-pad, maxV+pad];
+}
+
+function drawMainCanvas(){
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const margin = {left:58, right:16, top:16, bottom:46};
+  const plotW = W - margin.left - margin.right;
+  const plotH = H - margin.top - margin.bottom;
+
+  const X = DATA.X, Y = DATA.Y;
+  const xMax = Math.max(...X), yMax = Math.max(...Y);
+  const x0 = 0, y0 = 0;
+  const x1 = xMax * 1.08;
+  const y1 = yMax * 1.08;
+
+  function sx(x){ return margin.left + (x-x0)/(x1-x0)*plotW; }
+  function sy(y){ return margin.top + (1-(y-y0)/(y1-y0))*plotH; }
+
+  // grid
+  ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth = 1; ctx.font = '11px system-ui'; ctx.fillStyle = '#777';
+  const nTicksX = 6, nTicksY = 6;
+  for(let i=0;i<=nTicksX;i++){
+    const xv = x0 + (x1-x0)*i/nTicksX;
+    const px = sx(xv);
+    ctx.beginPath(); ctx.moveTo(px, margin.top); ctx.lineTo(px, margin.top+plotH); ctx.stroke();
+    ctx.fillText(xv.toFixed(1), px-10, margin.top+plotH+16);
+  }
+  for(let i=0;i<=nTicksY;i++){
+    const yv = y0 + (y1-y0)*i/nTicksY;
+    const py = sy(yv);
+    ctx.beginPath(); ctx.moveTo(margin.left, py); ctx.lineTo(margin.left+plotW, py); ctx.stroke();
+    ctx.fillText(yv.toFixed(0), margin.left-32, py+4);
+  }
+  // axes
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(margin.left, margin.top); ctx.lineTo(margin.left, margin.top+plotH); ctx.lineTo(margin.left+plotW, margin.top+plotH); ctx.stroke();
+
+  // axis titles
+  ctx.fillStyle = '#333'; ctx.font = '12px system-ui';
+  ctx.fillText('Horas de sono por noite', margin.left+plotW/2-62, H-6);
+  ctx.save();
+  ctx.translate(14, margin.top+plotH/2+70);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('Dias de afastamento por lesão', 0, 0);
+  ctx.restore();
+
+  const showStudent = document.getElementById('layer-student').checked;
+  const showOLS = document.getElementById('layer-ols').checked;
+  const showSlope = document.getElementById('layer-slope').checked && showOLS;
+  const showResid = document.getElementById('layer-resid').checked;
+
+  const b0s = parseFloat(document.getElementById('ctrl-b0').value);
+  const b1s = parseFloat(document.getElementById('ctrl-b1').value);
+
+  // residuals (drawn before points/lines so they sit underneath)
+  if(showResid && showStudent){
+    ctx.strokeStyle = '#a9822f99'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    for(let i=0;i<X.length;i++){
+      ctx.beginPath(); ctx.moveTo(sx(X[i]), sy(Y[i])); ctx.lineTo(sx(X[i]), sy(b0s+b1s*X[i])); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  if(showResid && showOLS){
+    ctx.strokeStyle = '#3b6ea599'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    for(let i=0;i<X.length;i++){
+      ctx.beginPath(); ctx.moveTo(sx(X[i]), sy(Y[i])); ctx.lineTo(sx(X[i]), sy(STATS.b0+STATS.b1*X[i])); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  // points
+  ctx.fillStyle = '#3b6ea5cc';
+  for(let i=0;i<X.length;i++){
+    ctx.beginPath(); ctx.arc(sx(X[i]), sy(Y[i]), 4, 0, 2*Math.PI); ctx.fill();
+  }
+
+  // student's line
+  if(showStudent){
+    ctx.strokeStyle = '#a9822f'; ctx.lineWidth = 2.2; ctx.setLineDash([7,4]);
+    ctx.beginPath(); ctx.moveTo(sx(x0), sy(b0s+b1s*x0)); ctx.lineTo(sx(x1), sy(b0s+b1s*x1)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // OLS line
+  if(showOLS){
+    ctx.strokeStyle = '#3b6ea5'; ctx.lineWidth = 2.6;
+    ctx.beginPath(); ctx.moveTo(sx(x0), sy(STATS.b0+STATS.b1*x0)); ctx.lineTo(sx(x1), sy(STATS.b0+STATS.b1*x1)); ctx.stroke();
+  }
+
+  // slope triangle on OLS line
+  if(showSlope){
+    const xa = x0 + (x1-x0)*0.22, xb = x0 + (x1-x0)*0.62;
+    const ya = STATS.b0+STATS.b1*xa, yb = STATS.b0+STATS.b1*xb;
+    ctx.strokeStyle = '#b3452c'; ctx.lineWidth = 1.6; ctx.setLineDash([5,3]);
+    ctx.beginPath(); ctx.moveTo(sx(xa), sy(ya)); ctx.lineTo(sx(xb), sy(ya)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx(xb), sy(ya)); ctx.lineTo(sx(xb), sy(yb)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#b3452c'; ctx.font = 'bold 13px system-ui';
+    ctx.fillText('ΔX', (sx(xa)+sx(xb))/2 - 10, sy(ya) + 18);
+    ctx.fillText('ΔY', sx(xb)+6, (sy(ya)+sy(yb))/2);
+  }
+
+  // legend
+  let ly = margin.top+14;
+  function legendItem(color, dash, text){
+    ctx.strokeStyle = color; ctx.lineWidth = 2.2; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(margin.left+plotW-140, ly); ctx.lineTo(margin.left+plotW-115, ly); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#333'; ctx.font='11px system-ui';
+    ctx.fillText(text, margin.left+plotW-110, ly+4);
+    ly += 16;
+  }
+  if(showStudent) legendItem('#a9822f',[7,4],'Sua reta');
+  if(showOLS) legendItem('#3b6ea5',[],'Mínimos quadrados');
+}
+
+/* ===================== Atualização de painéis ===================== */
+function classifyR(r){
+  const a = Math.abs(r);
+  if(a < 0.3) return 'fraca';
+  if(a < 0.6) return 'moderada';
+  return 'forte';
+}
+function fmt(x, d=2){ return x.toFixed(d).replace('.', ','); }
+function fmtP(p){
+  if(p < 0.0001) return '< 0,0001';
+  return fmt(p, 4);
+}
+
+function updateStatsPanel(){
+  document.getElementById('s-n').textContent = STATS.n;
+  document.getElementById('s-r').textContent = `${fmt(STATS.r)} (${fmt(STATS.rlo)} a ${fmt(STATS.rhi)})`;
+  const dir = STATS.r < 0 ? 'negativa' : 'positiva';
+  document.getElementById('s-r-label').textContent = `${classifyR(STATS.r)}, ${dir}`;
+  document.getElementById('s-r2').textContent = fmt(STATS.r2, 3);
+  document.getElementById('s-r2-label').textContent = `${fmt(STATS.r2*100,1)}% da variação de Y é explicada por X`;
+  const sign = STATS.b1 >= 0 ? '+' : '−';
+  document.getElementById('s-eq').textContent = `Y = ${fmt(STATS.b0,2)} ${sign} ${fmt(Math.abs(STATS.b1),2)} × X`;
+  document.getElementById('s-b1').textContent = `${fmt(STATS.b1,2)} (${fmt(STATS.b1lo,2)} a ${fmt(STATS.b1hi,2)})`;
+  document.getElementById('s-t').textContent = `t(${STATS.df}) = ${fmt(STATS.tStat,2)}`;
+  document.getElementById('s-p').textContent = fmtP(STATS.pValue);
+  const sigEl = document.getElementById('s-p-label');
+  if(STATS.pValue < 0.05){
+    sigEl.innerHTML = '<span class="sig-yes">inclinação estatisticamente significativa</span>';
+  } else {
+    sigEl.innerHTML = '<span class="sig-no">não significativa neste N</span>';
+  }
+
+  // magnitude marker: r from -1..1 mapped to 0..100%
+  const pct = ((STATS.r + 1) / 2) * 100;
+  document.getElementById('magMarker').style.left = `calc(${pct}% )`;
+
+  document.getElementById('s-spearman').textContent = fmt(SPEAR.rho);
+  document.getElementById('s-spearman-p').textContent = fmtP(SPEAR.p);
+
+  // interpretation text
+  const nl = document.getElementById('ctrl-nonlinear').checked;
+  const out = document.getElementById('ctrl-outlier').checked;
+  let txt = `Com n = ${STATS.n}, observou-se r = ${fmt(STATS.r)} (relação ${classifyR(STATS.r)} e ${dir}) e uma reta Y = `+
+    `${fmt(STATS.b0,1)} ${sign} ${fmt(Math.abs(STATS.b1),2)}×X, explicando ${fmt(STATS.r2*100,0)}% da variação de Y (R² = ${fmt(STATS.r2,2)}). `+
+    `${STATS.pValue < 0.05 ? 'A inclinação é estatisticamente diferente de zero (p ' + fmtP(STATS.pValue) + ').' : 'A inclinação não é estatisticamente diferente de zero neste tamanho de amostra (p = ' + fmtP(STATS.pValue) + ').'}`;
+  if(nl){
+    txt += ` Note que, com a relação não linear ativada, ρ de Spearman (${fmt(SPEAR.rho)}) tende a ficar mais próximo do padrão real da relação do que r de Pearson, pois Spearman captura qualquer relação monotônica, não apenas a linear.`;
+  }
+  if(out){
+    txt += ` O valor atípico incluído pode estar puxando a reta e o valor de r na sua direção — repare no efeito de removê-lo (desmarque a caixa) sobre a inclinação e o r.`;
+  }
+  document.getElementById('interpText').textContent = txt;
+}
+
+function updateSQRPanel(){
+  const b0s = parseFloat(document.getElementById('ctrl-b0').value);
+  const b1s = parseFloat(document.getElementById('ctrl-b1').value);
+  const sqrS = sumSqResid(DATA.X, DATA.Y, b0s, b1s);
+  document.getElementById('sqrStudent').textContent = fmt(sqrS, 1);
+
+  const cmp = document.getElementById('sqrCompare');
+  if(revealedOLS){
+    const sqrOLS = STATS.sse;
+    const diffPct = ((sqrS - sqrOLS) / sqrOLS) * 100;
+    cmp.innerHTML = `Sua reta: SQR = <span class="gold">${fmt(sqrS,1)}</span> &nbsp;|&nbsp; `+
+      `Reta de mínimos quadrados: SQR = <span class="blue">${fmt(sqrOLS,1)}</span> (o menor valor possível)<br>`+
+      `Sua reta tem uma SQR ${diffPct < 1 ? 'praticamente igual à' : fmt(diffPct,0)+'% maior que a'} ótima. `+
+      `Por definição, nenhuma outra reta produz uma SQR menor que a de mínimos quadrados.`;
+  } else {
+    cmp.innerHTML = 'Ajuste os controles de b0 e b1 tentando deixar a reta o mais "no meio" possível dos pontos. Depois, clique no botão acima para comparar com o ajuste ótimo.';
+  }
+}
+
+function refreshAll(){
+  const n = parseInt(document.getElementById('ctrl-n').value);
+  const rho = parseFloat(document.getElementById('ctrl-rho').value);
+  const sdY = parseFloat(document.getElementById('ctrl-sdy').value);
+  const seed = parseInt(document.getElementById('ctrl-seed').value);
+  const outlier = document.getElementById('ctrl-outlier').checked;
+  const nonlinear = document.getElementById('ctrl-nonlinear').checked;
+
+  DATA = generateData(n, rho, sdY, seed, outlier, nonlinear);
+  STATS = olsFit(DATA.X, DATA.Y);
+  SPEAR = spearman(DATA.X, DATA.Y);
+
+  drawMainCanvas();
+  updateStatsPanel();
+  updateSQRPanel();
+}
+
+/* ===================== Ligações de eventos ===================== */
+function bindRange(id, valId, decimals){
+  const el = document.getElementById(id);
+  const v = document.getElementById(valId);
+  el.addEventListener('input', ()=>{
+    v.textContent = decimals !== undefined ? parseFloat(el.value).toFixed(decimals) : el.value;
+  });
+}
+bindRange('ctrl-n','val-n',0);
+bindRange('ctrl-rho','val-rho',2);
+bindRange('ctrl-sdy','val-sdy',0);
+bindRange('ctrl-seed','val-seed',0);
+bindRange('ctrl-b0','val-b0',1);
+bindRange('ctrl-b1','val-b1',1);
+
+['ctrl-n','ctrl-rho','ctrl-sdy','ctrl-seed','ctrl-outlier','ctrl-nonlinear'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    revealedOLS = false;
+    document.getElementById('layer-ols').checked = false;
+    document.getElementById('layer-slope').checked = false;
+    document.getElementById('label-slope').classList.add('disabled');
+    document.getElementById('layer-slope').disabled = true;
+    document.getElementById('sqrCompare').innerHTML = 'Ajuste os controles de b0 e b1 tentando deixar a reta o mais "no meio" possível dos pontos. Depois, clique no botão acima para comparar com o ajuste ótimo.';
+    refreshAll();
+  });
+});
+
+['ctrl-b0','ctrl-b1'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    drawMainCanvas();
+    updateSQRPanel();
+  });
+});
+
+document.getElementById('layer-student').addEventListener('change', ()=>{ drawMainCanvas(); updateSQRPanel(); });
+document.getElementById('layer-resid').addEventListener('change', drawMainCanvas);
+document.getElementById('layer-ols').addEventListener('change', function(){
+  const enabled = this.checked;
+  document.getElementById('layer-slope').disabled = !enabled;
+  document.getElementById('label-slope').classList.toggle('disabled', !enabled);
+  if(!enabled){ document.getElementById('layer-slope').checked = false; }
+  drawMainCanvas();
+});
+document.getElementById('layer-slope').addEventListener('change', drawMainCanvas);
+
+document.getElementById('revealBtn').addEventListener('click', ()=>{
+  revealedOLS = true;
+  document.getElementById('layer-ols').checked = true;
+  document.getElementById('layer-slope').disabled = false;
+  document.getElementById('label-slope').classList.remove('disabled');
+  drawMainCanvas();
+  updateSQRPanel();
+});
+
+/* ===================== Retrair/expandir parâmetros ===================== */
+document.getElementById('toggleSetupBtn').addEventListener('click', function(){
+  const grid = document.getElementById('setupControls');
+  const collapsed = grid.classList.toggle('collapsed');
+  this.textContent = collapsed ? 'Expandir ▼' : 'Retrair ▲';
+  this.setAttribute('aria-expanded', String(!collapsed));
+});
+
+/* ===================== Quiz ===================== */
+document.querySelectorAll('.quiz-check-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const q = btn.getAttribute('data-q');
+    const optsDiv = document.querySelector(`.quiz-q input[name="${q}"]`).closest('.quiz-opts');
+    const correct = optsDiv.getAttribute('data-correct');
+    const selected = document.querySelector(`input[name="${q}"]:checked`);
+    const fb = document.getElementById(`fb-${q}`);
+    if(!selected){
+      fb.className = 'quiz-feedback wrong';
+      fb.textContent = 'Selecione uma alternativa antes de verificar.';
+      return;
+    }
+    if(selected.value === correct){
+      fb.className = 'quiz-feedback correct';
+      fb.textContent = 'Correto.';
+    } else {
+      fb.className = 'quiz-feedback wrong';
+      fb.textContent = 'Não é essa. Releia o painel de conceituação abstrata acima e tente novamente.';
+    }
+  });
+});
+
+/* ===================== Inicialização ===================== */
+refreshAll();
+</script>
+</body>
+</html>
