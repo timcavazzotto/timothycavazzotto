@@ -180,6 +180,12 @@
         <label><input type="checkbox" id="layer-student" checked> Sua reta</label>
         <label><input type="checkbox" id="layer-ols"> Reta de mínimos quadrados</label>
         <label id="label-slope" class="disabled"><input type="checkbox" id="layer-slope" disabled> Triângulo de inclinação (Δy/Δx)</label>
+        <label id="label-deltax" class="disabled" style="gap:4px;">Δx =
+          <select id="slopeDeltaX" disabled>
+            <option value="1" selected>1 unidade</option>
+            <option value="2">2 unidades</option>
+          </select>
+        </label>
         <label><input type="checkbox" id="layer-resid"> Resíduos</label>
       </div>
     </div>
@@ -485,9 +491,24 @@ let SPEAR = null;
 let revealedOLS = false;
 
 /* ===================== Desenho do canvas principal ===================== */
-function niceRange(minV, maxV){
-  const pad = (maxV-minV)*0.08 || Math.max(1, Math.abs(maxV)*0.1) || 1;
-  return [minV-pad, maxV+pad];
+function niceStep(rawRange, targetCount){
+  const roughStep = rawRange / targetCount;
+  if(roughStep <= 0) return 1;
+  const mag = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const norm = roughStep / mag;
+  let niceNorm;
+  if(norm < 1.5) niceNorm = 1;
+  else if(norm < 3) niceNorm = 2;
+  else if(norm < 7) niceNorm = 5;
+  else niceNorm = 10;
+  return Math.max(1, Math.round(niceNorm * mag));
+}
+function niceTicksFromZero(maxVal, targetCount){
+  const step = niceStep(Math.max(maxVal, 1), targetCount);
+  const axisMax = Math.ceil(maxVal / step) * step;
+  const ticks = [];
+  for(let v=0; v<=axisMax + 1e-9; v += step) ticks.push(Math.round(v));
+  return { step, axisMax, ticks };
 }
 
 function drawMainCanvas(){
@@ -501,29 +522,28 @@ function drawMainCanvas(){
   const plotH = H - margin.top - margin.bottom;
 
   const X = DATA.X, Y = DATA.Y;
-  const xMax = Math.max(...X), yMax = Math.max(...Y);
+  const xMaxData = Math.max(...X), yMaxData = Math.max(...Y);
+  const xTickInfo = niceTicksFromZero(xMaxData * 1.05, 6);
+  const yTickInfo = niceTicksFromZero(yMaxData * 1.05, 6);
   const x0 = 0, y0 = 0;
-  const x1 = xMax * 1.08;
-  const y1 = yMax * 1.08;
+  const x1 = xTickInfo.axisMax;
+  const y1 = yTickInfo.axisMax;
 
   function sx(x){ return margin.left + (x-x0)/(x1-x0)*plotW; }
   function sy(y){ return margin.top + (1-(y-y0)/(y1-y0))*plotH; }
 
-  // grid
+  // grid (valores sempre inteiros)
   ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth = 1; ctx.font = '11px system-ui'; ctx.fillStyle = '#777';
-  const nTicksX = 6, nTicksY = 6;
-  for(let i=0;i<=nTicksX;i++){
-    const xv = x0 + (x1-x0)*i/nTicksX;
+  xTickInfo.ticks.forEach(xv=>{
     const px = sx(xv);
     ctx.beginPath(); ctx.moveTo(px, margin.top); ctx.lineTo(px, margin.top+plotH); ctx.stroke();
-    ctx.fillText(xv.toFixed(1), px-10, margin.top+plotH+16);
-  }
-  for(let i=0;i<=nTicksY;i++){
-    const yv = y0 + (y1-y0)*i/nTicksY;
+    ctx.fillText(String(xv), px-8, margin.top+plotH+16);
+  });
+  yTickInfo.ticks.forEach(yv=>{
     const py = sy(yv);
     ctx.beginPath(); ctx.moveTo(margin.left, py); ctx.lineTo(margin.left+plotW, py); ctx.stroke();
-    ctx.fillText(yv.toFixed(0), margin.left-32, py+4);
-  }
+    ctx.fillText(String(yv), margin.left-32, py+4);
+  });
   // axes
   ctx.strokeStyle = '#333'; ctx.lineWidth = 1.2;
   ctx.beginPath(); ctx.moveTo(margin.left, margin.top); ctx.lineTo(margin.left, margin.top+plotH); ctx.lineTo(margin.left+plotW, margin.top+plotH); ctx.stroke();
@@ -580,17 +600,22 @@ function drawMainCanvas(){
     ctx.beginPath(); ctx.moveTo(sx(x0), sy(STATS.b0+STATS.b1*x0)); ctx.lineTo(sx(x1), sy(STATS.b0+STATS.b1*x1)); ctx.stroke();
   }
 
-  // slope triangle on OLS line
+  // slope triangle on OLS line: Δx fixo (1 ou 2 unidades de X) para formalizar b1 = Δy/Δx
   if(showSlope){
-    const xa = x0 + (x1-x0)*0.22, xb = x0 + (x1-x0)*0.62;
+    const deltaX = parseFloat(document.getElementById('slopeDeltaX').value);
+    let xa = STATS.xbar - deltaX/2;
+    if(xa < x0 + 0.05*(x1-x0)) xa = x0 + 0.05*(x1-x0);
+    if(xa + deltaX > x1 - 0.05*(x1-x0)) xa = x1 - 0.05*(x1-x0) - deltaX;
+    const xb = xa + deltaX;
     const ya = STATS.b0+STATS.b1*xa, yb = STATS.b0+STATS.b1*xb;
+    const deltaY = STATS.b1*deltaX;
     ctx.strokeStyle = '#b3452c'; ctx.lineWidth = 1.6; ctx.setLineDash([5,3]);
     ctx.beginPath(); ctx.moveTo(sx(xa), sy(ya)); ctx.lineTo(sx(xb), sy(ya)); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(sx(xb), sy(ya)); ctx.lineTo(sx(xb), sy(yb)); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = '#b3452c'; ctx.font = 'bold 13px system-ui';
-    ctx.fillText('ΔX', (sx(xa)+sx(xb))/2 - 10, sy(ya) + 18);
-    ctx.fillText('ΔY', sx(xb)+6, (sy(ya)+sy(yb))/2);
+    ctx.fillText(`Δx = ${deltaX}`, (sx(xa)+sx(xb))/2 - 18, sy(ya) + 18);
+    ctx.fillText(`Δy = ${deltaY.toFixed(1)}`, sx(xb)+6, (sy(ya)+sy(yb))/2);
   }
 
   // legend
@@ -719,6 +744,8 @@ bindRange('ctrl-b1','val-b1',1);
     document.getElementById('layer-slope').checked = false;
     document.getElementById('label-slope').classList.add('disabled');
     document.getElementById('layer-slope').disabled = true;
+    document.getElementById('slopeDeltaX').disabled = true;
+    document.getElementById('label-deltax').classList.add('disabled');
     document.getElementById('sqrCompare').innerHTML = 'Ajuste os controles de b0 e b1 tentando deixar a reta o mais "no meio" possível dos pontos. Depois, clique no botão acima para comparar com o ajuste ótimo.';
     refreshAll();
   });
@@ -737,10 +764,20 @@ document.getElementById('layer-ols').addEventListener('change', function(){
   const enabled = this.checked;
   document.getElementById('layer-slope').disabled = !enabled;
   document.getElementById('label-slope').classList.toggle('disabled', !enabled);
-  if(!enabled){ document.getElementById('layer-slope').checked = false; }
+  if(!enabled){
+    document.getElementById('layer-slope').checked = false;
+    document.getElementById('slopeDeltaX').disabled = true;
+    document.getElementById('label-deltax').classList.add('disabled');
+  }
   drawMainCanvas();
 });
-document.getElementById('layer-slope').addEventListener('change', drawMainCanvas);
+document.getElementById('layer-slope').addEventListener('change', function(){
+  const enabled = this.checked;
+  document.getElementById('slopeDeltaX').disabled = !enabled;
+  document.getElementById('label-deltax').classList.toggle('disabled', !enabled);
+  drawMainCanvas();
+});
+document.getElementById('slopeDeltaX').addEventListener('change', drawMainCanvas);
 
 document.getElementById('revealBtn').addEventListener('click', ()=>{
   revealedOLS = true;
