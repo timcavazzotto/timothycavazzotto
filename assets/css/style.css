@@ -561,23 +561,22 @@ a:focus-visible, button:focus-visible {
 }
 
 /*----------- Página sobre: texto e foto ---------*/
-.about-layout {
-  display: flex;
-  gap: clamp(1.5rem, 4vw, 3rem);
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-
 .about-photo {
+  float: left;
   width: 220px;
   height: 220px;
   object-fit: cover;
   border-radius: var(--radius);
   border: 1px solid var(--line-soft);
-  flex-shrink: 0;
+  margin: 0 2rem 1rem 0;
 }
 
-.about-text { flex: 1; min-width: 260px; }
+.about-wrap::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
 .page-hero .hero-eyebrow { margin-bottom: 0.8rem; }
 .page-hero h1 { font-size: var(--step3); max-width: 22ch; }
 .page-hero p { color: var(--ink-soft); max-width: 55ch; margin-top: 1rem; }
