@@ -559,6 +559,25 @@ a:focus-visible, button:focus-visible {
 .page-hero {
   padding-block: clamp(2.6rem, 6vw, 4rem) clamp(1.8rem, 4vw, 2.4rem);
 }
+
+/*----------- Página sobre: texto e foto ---------*/
+.about-layout {
+  display: flex;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.about-photo {
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+
+.about-text { flex: 1; min-width: 260px; }
 .page-hero .hero-eyebrow { margin-bottom: 0.8rem; }
 .page-hero h1 { font-size: var(--step3); max-width: 22ch; }
 .page-hero p { color: var(--ink-soft); max-width: 55ch; margin-top: 1rem; }
