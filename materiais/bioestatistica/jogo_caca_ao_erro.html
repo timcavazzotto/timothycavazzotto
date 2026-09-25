@@ -109,7 +109,7 @@
 
 <header>
   <h1>Caça ao Erro — Sprint de Bioestatística</h1>
-  <p class="subtitle">Revisão rápida: variáveis, delineamento, descritiva, normalidade e teste t/ANOVA</p>
+  <p class="subtitle">Revisão rápida: variáveis, correlação e regressão, descritiva, normalidade e teste t/ANOVA</p>
 </header>
 
 <main>
@@ -196,17 +196,19 @@ const CARDS = [
   { topic:"Tipos de variável", text:"Classificação de IMC (baixo peso / eutrófico / sobrepeso / obesidade) foi comparada entre dois grupos usando teste t para as médias das categorias.", hasError:true,
     explanation:"Erro: essa classificação é uma variável ordinal (categorias com ordem, mas sem distância numérica igual entre elas). O teste t assume variável contínua; o adequado seria qui-quadrado, teste de tendência ou comparar o IMC contínuo em si (não a categoria)." },
 
-  // ---- Delineamento de estudo ----
-  { topic:"Delineamento de estudo", text:"Pacientes foram randomizados para receber Droga A ou placebo e acompanhados por 12 semanas para comparar o desfecho — chamado de ensaio clínico randomizado.", hasError:false,
-    explanation:"Correto. Alocação aleatória a intervenções e acompanhamento prospectivo caracterizam um ensaio clínico randomizado (RCT)." },
-  { topic:"Delineamento de estudo", text:"Pesquisadores selecionaram pacientes com infarto (casos) e sem infarto (controles) e investigaram retrospectivamente a exposição ao tabagismo — chamado de estudo de coorte.", hasError:true,
-    explanation:"Erro: partir do desfecho (infarto sim/não) para investigar a exposição passada é a definição de estudo caso-controle, não de coorte. Coorte parte da exposição e acompanha para ver quem desenvolve o desfecho." },
-  { topic:"Delineamento de estudo", text:"Um questionário foi aplicado a uma amostra da população em um único momento para estimar a prevalência de hipertensão — estudo transversal.", hasError:false,
-    explanation:"Correto. Medir exposição e desfecho no mesmo momento, numa amostra, é a definição de estudo transversal (prevalência)." },
-  { topic:"Delineamento de estudo", text:"Fumantes e não fumantes foram acompanhados por 10 anos para verificar quem desenvolve DPOC — chamado de estudo caso-controle.", hasError:true,
-    explanation:"Erro: partir da exposição (fumar ou não) e acompanhar ao longo do tempo até o desfecho é a definição de estudo de coorte, não caso-controle." },
-  { topic:"Delineamento de estudo", text:"Um pesquisador alocou os primeiros 30 pacientes que chegaram ao Grupo A e os últimos 30 ao Grupo B, sem sorteio, e chamou o estudo de 'ensaio clínico randomizado'.", hasError:true,
-    explanation:"Erro: sem um processo de alocação aleatória verdadeiro, não é um ensaio randomizado — é um desenho quase-experimental, sujeito a viés de seleção (ex.: pacientes que chegam antes podem diferir sistematicamente dos que chegam depois)." },
+  // ---- Correlação e regressão linear simples ----
+  { topic:"Correlação e regressão", text:"Um estudo encontrou r = 0,85 entre horas de sono e menor tempo de afastamento por lesão em atletas, e concluiu que 'dormir mais CAUSA menos lesões'.", hasError:true,
+    explanation:"Erro: correlação não implica causalidade. Mesmo uma correlação forte pode refletir um fator de confusão (ex.: atletas mais bem preparados fisicamente tanto dormem melhor quanto se lesionam menos), não necessariamente um efeito causal direto do sono." },
+  { topic:"Correlação e regressão", text:"Um pesquisador relatou r = -0,78 entre duas variáveis e descreveu a relação como 'forte e negativa'.", hasError:false,
+    explanation:"Correto. |r| entre 0,6 e 1 costuma ser classificado como uma correlação forte; o sinal negativo indica que as variáveis se movem em direções opostas." },
+  { topic:"Correlação e regressão", text:"Usando uma reta de regressão ajustada com dados de pacientes de 20 a 60 anos, um pesquisador previu o desfecho para um paciente de 90 anos.", hasError:true,
+    explanation:"Erro: isso é extrapolação além da faixa de dados observada. Nada garante que a relação linear estimada entre 20 e 60 anos continue válida para uma idade tão fora desse intervalo." },
+  { topic:"Correlação e regressão", text:"Em um modelo de regressão linear simples, R² = 0,64 foi interpretado como 'a variável X explica 64% da variação da variável Y'.", hasError:false,
+    explanation:"Correto. R² (coeficiente de determinação) representa a proporção da variância de Y que é explicada pela reta de regressão em função de X." },
+  { topic:"Correlação e regressão", text:"Um único paciente com valores extremos (outlier) foi incluído na análise e mudou substancialmente o coeficiente de correlação e a inclinação da reta — o pesquisador não verificou o efeito de removê-lo.", hasError:true,
+    explanation:"Erro (de conduta analítica): outliers podem ter influência desproporcional sobre r e sobre a reta ajustada, especialmente em amostras pequenas. É boa prática verificar a sensibilidade dos resultados à presença desse ponto, e não simplesmente ignorá-la." },
+  { topic:"Correlação e regressão", text:"Duas variáveis tinham uma relação claramente curva (não linear) no gráfico de dispersão. O r de Pearson deu baixo (r = 0,15), e o pesquisador concluiu 'não há relação alguma entre as variáveis'.", hasError:true,
+    explanation:"Erro: o r de Pearson mede apenas a força de uma relação LINEAR. Uma relação não linear forte pode perfeitamente coexistir com um r de Pearson baixo — o gráfico de dispersão e/ou o rô de Spearman (que capta relações monotônicas) deveriam ter sido considerados antes de descartar qualquer relação." },
 
   // ---- Estatística descritiva ----
   { topic:"Estatística descritiva", text:"Uma variável de renda familiar, fortemente assimétrica (poucos valores muito altos puxando a distribuição), foi resumida no artigo apenas como 'média = R$ 4.500, DP = R$ 3.200'.", hasError:true,
