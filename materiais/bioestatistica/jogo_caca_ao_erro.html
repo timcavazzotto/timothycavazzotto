@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caça ao Erro — Sprint de Bioestatística</title>
+<style>
+  :root{
+    --blue:#3b6ea5; --blue-fill:#3b6ea533; --gray:#6b6b6b; --gray-fill:#6b6b6b33;
+    --gold:#a9822f; --gold-fill:#a9822f33; --sig:#b3452c; --ok:#2b7a3d; --ok-fill:#2b7a3d1a;
+    --sig-fill:#b3452c1a; --bg:#fafafa; --line:#ddd;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin:0; padding:0; background:var(--bg); color:#222;
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  header{ padding:24px 32px 12px 32px; border-bottom:1px solid var(--line); background:#fff; text-align:center;}
+  header h1{ margin:0 0 4px 0; font-size:1.4rem; font-weight:700;}
+  header .subtitle{ margin:0; color:var(--gray); font-size:0.92rem;}
+
+  main{ flex:1; display:flex; justify-content:center; padding:24px 16px 40px 16px; }
+  .screen{ width:100%; max-width:640px; }
+  .hidden{ display:none !important; }
+
+  .card-panel{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:28px 28px; }
+
+  /* ---------- Tela inicial ---------- */
+  #screen-start ul{ text-align:left; font-size:0.94rem; line-height:1.6; color:#333; padding-left:20px; }
+  #screen-start .rules-box{ background:#eef3f8; border-left:4px solid var(--blue); border-radius:0 8px 8px 0; padding:14px 18px; margin:16px 0; }
+  .big-btn{
+    font-family:inherit; font-size:1.02rem; font-weight:600; padding:14px 28px; border-radius:8px;
+    border:1px solid var(--blue); background:var(--blue); color:#fff; cursor:pointer; width:100%; margin-top:10px;
+  }
+  .big-btn:hover{ opacity:0.9; }
+  .big-btn.secondary{ background:#fff; color:var(--blue); }
+
+  /* ---------- Tela de jogo ---------- */
+  .hud{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:0.9rem; }
+  .hud .stat{ text-align:center; }
+  .hud .stat .n{ font-size:1.3rem; font-weight:700; color:var(--blue); font-variant-numeric:tabular-nums; }
+  .hud .stat .l{ color:var(--gray); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.03em; }
+
+  .timer-bar-wrap{ height:8px; background:#eee; border-radius:4px; overflow:hidden; margin-bottom:18px; }
+  .timer-bar{ height:100%; background:var(--blue); width:100%; transition:width 0.1s linear, background 0.3s; }
+  .timer-bar.warn{ background:var(--gold); }
+  .timer-bar.danger{ background:var(--sig); }
+
+  .topic-badge{
+    display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:0.03em; text-transform:uppercase;
+    color:var(--blue); background:var(--blue-fill); padding:4px 12px; border-radius:12px; margin-bottom:14px;
+  }
+  .card-text{ font-size:1.12rem; line-height:1.5; color:#1a1a1a; min-height:110px; }
+
+  .answer-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:22px; }
+  .ans-btn{
+    font-family:inherit; font-size:1rem; font-weight:600; padding:16px 10px; border-radius:8px; cursor:pointer;
+  }
+  .ans-btn.ok{ border:2px solid var(--ok); background:#fff; color:var(--ok); }
+  .ans-btn.ok:hover{ background:var(--ok-fill); }
+  .ans-btn.err{ border:2px solid var(--sig); background:#fff; color:var(--sig); }
+  .ans-btn.err:hover{ background:var(--sig-fill); }
+  .ans-btn:disabled{ opacity:0.5; cursor:default; }
+
+  .feedback-box{ margin-top:18px; border-radius:8px; padding:16px 18px; font-size:0.92rem; line-height:1.5; display:none; }
+  .feedback-box.correct{ background:var(--ok-fill); border-left:4px solid var(--ok); display:block; }
+  .feedback-box.wrong{ background:var(--sig-fill); border-left:4px solid var(--sig); display:block; }
+  .feedback-box .verdict{ font-weight:700; margin-bottom:4px; }
+  .feedback-box.correct .verdict{ color:var(--ok); }
+  .feedback-box.wrong .verdict{ color:var(--sig); }
+
+  .next-hint{ text-align:center; font-size:0.78rem; color:var(--gray); margin-top:10px; }
+  .streak-note{ text-align:center; font-size:0.82rem; color:var(--gold); font-weight:600; margin-top:8px; min-height:18px; }
+
+  /* ---------- Tela final ---------- */
+  #screen-end .score-hero{ text-align:center; margin-bottom:22px; }
+  #screen-end .score-hero .n{ font-size:2.6rem; font-weight:800; color:var(--blue); }
+  #screen-end .score-hero .l{ color:var(--gray); font-size:0.9rem; }
+
+  table.breakdown{ width:100%; border-collapse:collapse; font-size:0.88rem; margin:18px 0; }
+  table.breakdown th, table.breakdown td{ border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; }
+  table.breakdown th{ font-size:0.72rem; text-transform:uppercase; color:var(--gray); }
+  table.breakdown td.num{ text-align:center; font-variant-numeric:tabular-nums; }
+  .bar-cell{ width:120px; }
+  .bar-track{ background:#eee; border-radius:4px; height:8px; overflow:hidden; }
+  .bar-fill{ height:100%; background:var(--blue); }
+
+  .review-list{ margin-top:20px; }
+  .review-item{ border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; font-size:0.88rem; }
+  .review-item .topic-badge{ margin-bottom:8px; }
+  .review-item .truth{ font-weight:700; margin-top:6px; }
+  .review-item .truth.err{ color:var(--sig); }
+  .review-item .truth.ok{ color:var(--ok); }
+
+  .review-correct-details{ margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+  .review-correct-details summary{
+    cursor:pointer; font-weight:600; font-size:0.9rem; color:var(--ok);
+    padding:8px 10px; background:var(--ok-fill); border-radius:6px; list-style:none;
+  }
+  .review-correct-details summary::-webkit-details-marker{ display:none; }
+  .review-correct-details summary::before{ content:"▸ "; }
+  .review-correct-details[open] summary::before{ content:"▾ "; }
+
+  footer{ text-align:center; padding:14px; color:var(--gray); font-size:0.78rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Caça ao Erro — Sprint de Bioestatística</h1>
+  <p class="subtitle">Revisão rápida: variáveis, delineamento, descritiva, normalidade e teste t/ANOVA</p>
+</header>
+
+<main>
+
+  <!-- TELA INICIAL -->
+  <div class="screen" id="screen-start">
+    <div class="card-panel">
+      <p style="font-size:0.98rem; line-height:1.55;">Você vai ver, uma de cada vez, afirmações curtas — algumas <strong>corretas</strong>, outras com um <strong>erro estatístico</strong> escondido. Sua tarefa: decidir rápido.</p>
+      <div class="rules-box">
+        <strong>Como jogar</strong>
+        <ul>
+          <li>Você tem <strong>90 segundos</strong>. O relógio não para.</li>
+          <li>Para cada carta, clique em <strong>"Está correto"</strong> ou <strong>"Tem um erro"</strong>.</li>
+          <li>Acerto = +10 pontos. A cada 3 acertos seguidos, +5 de bônus.</li>
+          <li>No final, você vê seu desempenho por tema e revisa tudo o que errou, com explicação.</li>
+        </ul>
+      </div>
+      <button class="big-btn" id="btnStart">Iniciar sprint (90s)</button>
+    </div>
+  </div>
+
+  <!-- TELA DE JOGO -->
+  <div class="screen hidden" id="screen-game">
+    <div class="hud">
+      <div class="stat"><div class="n" id="hudScore">0</div><div class="l">Pontos</div></div>
+      <div class="stat"><div class="n" id="hudTime">90</div><div class="l">Segundos</div></div>
+      <div class="stat"><div class="n" id="hudStreak">0</div><div class="l">Sequência</div></div>
+    </div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar"></div></div>
+
+    <div class="card-panel">
+      <div class="topic-badge" id="cardTopic">—</div>
+      <div class="card-text" id="cardText">—</div>
+
+      <div class="answer-row">
+        <button class="ans-btn ok" id="btnOk">✓ Está correto</button>
+        <button class="ans-btn err" id="btnErr">✗ Tem um erro</button>
+      </div>
+
+      <div class="feedback-box" id="feedbackBox">
+        <div class="verdict" id="feedbackVerdict"></div>
+        <div id="feedbackText"></div>
+      </div>
+      <div class="streak-note" id="streakNote"></div>
+      <div class="next-hint" id="nextHint"></div>
+    </div>
+  </div>
+
+  <!-- TELA FINAL -->
+  <div class="screen hidden" id="screen-end">
+    <div class="card-panel">
+      <div class="score-hero">
+        <div class="n" id="finalScore">0</div>
+        <div class="l">pontos · <span id="finalAccuracy">0</span>% de acerto (<span id="finalCorrect">0</span>/<span id="finalTotal">0</span> cartas)</div>
+      </div>
+
+      <table class="breakdown">
+        <thead><tr><th>Tema</th><th class="num">Acertos</th><th class="bar-cell"></th></tr></thead>
+        <tbody id="breakdownBody"></tbody>
+      </table>
+
+      <button class="big-btn" id="btnReplay">Jogar novamente</button>
+
+      <div class="review-list" id="reviewList"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Uso em sala de aula — revisão de bioestatística, semanas 1–5.</footer>
+
+<script>
+/* ===================== Banco de cartas ===================== */
+const CARDS = [
+  // ---- Tipos de variável ----
+  { topic:"Tipos de variável", text:"Número de comprimidos tomados por dia por um paciente é uma variável quantitativa discreta.", hasError:false,
+    explanation:"Correto. É uma contagem (números inteiros, sem valores intermediários possíveis) — variável quantitativa discreta." },
+  { topic:"Tipos de variável", text:"Um pesquisador comparou o estágio do câncer (I, II, III, IV) entre dois grupos usando teste t para comparar as médias dos estágios.", hasError:true,
+    explanation:"Erro: estágio do câncer é uma variável ordinal — as categorias têm ordem, mas a distância entre elas não é numericamente igual. Calcular média e aplicar teste t trata como se fosse uma escala contínua, o que não é apropriado; o correto seria qui-quadrado, teste de tendência ou Mann-Whitney/Kruskal-Wallis." },
+  { topic:"Tipos de variável", text:"Tipo sanguíneo (A, B, AB, O) foi classificado como variável ordinal no relatório do estudo.", hasError:true,
+    explanation:"Erro: tipo sanguíneo é uma variável nominal — as categorias não têm uma ordem natural entre si (A não é 'maior' ou 'menor' que B)." },
+  { topic:"Tipos de variável", text:"Pressão arterial sistólica em mmHg foi tratada como variável quantitativa contínua.", hasError:false,
+    explanation:"Correto. Pressão arterial pode assumir qualquer valor dentro de um intervalo (na prática, medida com determinada precisão), sendo uma variável contínua." },
+  { topic:"Tipos de variável", text:"Classificação de IMC (baixo peso / eutrófico / sobrepeso / obesidade) foi comparada entre dois grupos usando teste t para as médias das categorias.", hasError:true,
+    explanation:"Erro: essa classificação é uma variável ordinal (categorias com ordem, mas sem distância numérica igual entre elas). O teste t assume variável contínua; o adequado seria qui-quadrado, teste de tendência ou comparar o IMC contínuo em si (não a categoria)." },
+
+  // ---- Delineamento de estudo ----
+  { topic:"Delineamento de estudo", text:"Pacientes foram randomizados para receber Droga A ou placebo e acompanhados por 12 semanas para comparar o desfecho — chamado de ensaio clínico randomizado.", hasError:false,
+    explanation:"Correto. Alocação aleatória a intervenções e acompanhamento prospectivo caracterizam um ensaio clínico randomizado (RCT)." },
+  { topic:"Delineamento de estudo", text:"Pesquisadores selecionaram pacientes com infarto (casos) e sem infarto (controles) e investigaram retrospectivamente a exposição ao tabagismo — chamado de estudo de coorte.", hasError:true,
+    explanation:"Erro: partir do desfecho (infarto sim/não) para investigar a exposição passada é a definição de estudo caso-controle, não de coorte. Coorte parte da exposição e acompanha para ver quem desenvolve o desfecho." },
+  { topic:"Delineamento de estudo", text:"Um questionário foi aplicado a uma amostra da população em um único momento para estimar a prevalência de hipertensão — estudo transversal.", hasError:false,
+    explanation:"Correto. Medir exposição e desfecho no mesmo momento, numa amostra, é a definição de estudo transversal (prevalência)." },
+  { topic:"Delineamento de estudo", text:"Fumantes e não fumantes foram acompanhados por 10 anos para verificar quem desenvolve DPOC — chamado de estudo caso-controle.", hasError:true,
+    explanation:"Erro: partir da exposição (fumar ou não) e acompanhar ao longo do tempo até o desfecho é a definição de estudo de coorte, não caso-controle." },
+  { topic:"Delineamento de estudo", text:"Um pesquisador alocou os primeiros 30 pacientes que chegaram ao Grupo A e os últimos 30 ao Grupo B, sem sorteio, e chamou o estudo de 'ensaio clínico randomizado'.", hasError:true,
+    explanation:"Erro: sem um processo de alocação aleatória verdadeiro, não é um ensaio randomizado — é um desenho quase-experimental, sujeito a viés de seleção (ex.: pacientes que chegam antes podem diferir sistematicamente dos que chegam depois)." },
+
+  // ---- Estatística descritiva ----
+  { topic:"Estatística descritiva", text:"Uma variável de renda familiar, fortemente assimétrica (poucos valores muito altos puxando a distribuição), foi resumida no artigo apenas como 'média = R$ 4.500, DP = R$ 3.200'.", hasError:true,
+    explanation:"Erro (ou pelo menos incompleto): em distribuições assimétricas, média e desvio-padrão podem enganar, pois são puxados pelos valores extremos. Mediana e intervalo interquartil (IQR) descrevem melhor o 'valor típico' nesse caso." },
+  { topic:"Estatística descritiva", text:"A idade dos participantes, com distribuição aproximadamente simétrica, foi resumida como 'média = 45 anos, DP = 8 anos'.", hasError:false,
+    explanation:"Correto. Para uma distribuição aproximadamente simétrica, média e desvio-padrão são medidas de resumo apropriadas." },
+  { topic:"Estatística descritiva", text:"O tempo de internação hospitalar (dias) — variável tipicamente assimétrica à direita, com poucos pacientes internados por muito tempo — foi resumido apenas como 'média = 6 dias', sem nenhuma medida de dispersão ou mediana.", hasError:true,
+    explanation:"Erro: além da assimetria esperada tornar a média pouco representativa sozinha, faltou completamente uma medida de dispersão (DP ou IQR) e, idealmente, a mediana." },
+  { topic:"Estatística descritiva", text:"Altura (cm) em uma amostra de adultos saudáveis, com distribuição aproximadamente normal, foi resumida com média e desvio-padrão.", hasError:false,
+    explanation:"Correto. Altura em adultos saudáveis costuma ter distribuição próxima da normal, tornando média/DP medidas de resumo adequadas." },
+  { topic:"Estatística descritiva", text:"Uma escala de dor de 0 a 10 (valores concentrados entre 2 e 4, distribuição assimétrica) foi resumida apenas como 'média = 3,2, DP = 1,8', sem mediana ou moda.", hasError:true,
+    explanation:"Erro: escalas ordinais como essa, especialmente quando assimétricas, são mais bem descritas por mediana e IQR (ou ao menos acompanhadas delas) do que apenas por média e DP." },
+
+  // ---- Distribuição e normalidade ----
+  { topic:"Distribuição e normalidade", text:"Um QQ-plot mostrou os pontos alinhados aproximadamente sobre a linha diagonal — os dados são compatíveis com distribuição normal.", hasError:false,
+    explanation:"Correto. Pontos próximos à linha diagonal num QQ-plot indicam que os quantis observados se aproximam dos esperados sob normalidade." },
+  { topic:"Distribuição e normalidade", text:"O teste de Shapiro-Wilk deu p = 0,63, e o pesquisador concluiu: 'os dados definitivamente seguem distribuição normal'.", hasError:true,
+    explanation:"Erro de interpretação: não rejeitar H0 (p > 0,05) significa apenas que não há evidência suficiente contra a normalidade — não é uma prova de que os dados são normais." },
+  { topic:"Distribuição e normalidade", text:"Com uma amostra de apenas 8 pacientes, o Shapiro-Wilk deu p = 0,40 (não significativo), e o pesquisador concluiu 'dados normais, pode usar teste t' sem mais ressalvas.", hasError:true,
+    explanation:"Erro sutil: com n tão pequeno, o teste de Shapiro-Wilk tem pouco poder para detectar desvios da normalidade — um resultado não significativo pode simplesmente refletir amostra pequena, não ausência real de assimetria." },
+  { topic:"Distribuição e normalidade", text:"Um histograma claramente assimétrico à direita, com cauda longa, foi analisado com teste t (que assume normalidade), sem transformação dos dados ou uso de teste não paramétrico.", hasError:true,
+    explanation:"Erro: diante de assimetria evidente, o pressuposto de normalidade do teste t fica comprometido — o correto seria considerar transformação dos dados (ex.: log) ou um teste não paramétrico equivalente (ex.: Mann-Whitney)." },
+  { topic:"Distribuição e normalidade", text:"Dados com forte assimetria positiva foram transformados em log antes da análise; após a transformação, o Shapiro-Wilk não foi significativo (p = 0,52), e o pesquisador seguiu com teste t nos dados transformados.", hasError:false,
+    explanation:"Correto. Transformar dados assimetricamente distribuídos (ex.: com log) para aproximar a normalidade antes de aplicar um teste paramétrico é uma estratégia estatisticamente válida." },
+
+  // ---- Teste t / ANOVA ----
+  { topic:"Teste t / ANOVA", text:"'O p-valor foi 0,03, o que significa que há 3% de chance de a hipótese nula ser verdadeira.'", hasError:true,
+    explanation:"Erro clássico de interpretação: o p-valor é a probabilidade de observar um resultado tão extremo (ou mais) quanto o obtido, assumindo que H0 é verdadeira — não é a probabilidade de H0 ser verdadeira." },
+  { topic:"Teste t / ANOVA", text:"Um pesquisador comparou dois grupos com teste t de Student assumindo variâncias iguais, mesmo com desvios-padrão bem diferentes entre os grupos (DP grupo A = 2, DP grupo B = 15), sem usar a correção de Welch.", hasError:true,
+    explanation:"Erro: com variâncias claramente desiguais entre os grupos, o teste t de Student (que assume variâncias iguais) é inadequado — o correto é usar o teste t de Welch, que não assume essa igualdade." },
+  { topic:"Teste t / ANOVA", text:"Para comparar 3 grupos, um pesquisador fez três testes t separados (A vs. B, A vs. C, B vs. C) em vez de uma ANOVA.", hasError:true,
+    explanation:"Erro: realizar múltiplas comparações par a par sem correção infla a taxa de erro tipo I (falso positivo) além dos 5% nominais. O correto é uma ANOVA seguida de teste post-hoc apropriado (ex.: Tukey), se o resultado global for significativo." },
+  { topic:"Teste t / ANOVA", text:"Uma ANOVA comparando 3 grupos deu p = 0,02; o pesquisador então aplicou o teste post-hoc de Tukey para identificar quais pares de grupos diferem entre si.", hasError:false,
+    explanation:"Correto. Esse é o fluxo apropriado: ANOVA para o teste global e, se significativo, um post-hoc com correção (como Tukey) para as comparações par a par." },
+  { topic:"Teste t / ANOVA", text:"'Não houve diferença estatisticamente significativa entre os grupos (p = 0,08), portanto provamos que os grupos são iguais.'", hasError:true,
+    explanation:"Erro: a ausência de significância estatística não é prova de ausência de efeito — pode simplesmente refletir poder estatístico insuficiente (amostra pequena, efeito real pequeno). 'Não significativo' não é o mesmo que 'sem diferença real'." },
+];
+
+/* ===================== Estado ===================== */
+let deck = [];
+let deckIndex = 0;
+let score = 0;
+let streak = 0;
+let timeLeft = 90;
+const START_SECONDS = 90;
+let timerId = null;
+let autoAdvanceId = null;
+let answering = false;
+let currentCard = null;
+let answered = [];   // {card, wasCorrect}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* ===================== Navegação de telas ===================== */
+function showScreen(id){
+  ['screen-start','screen-game','screen-end'].forEach(s=>{
+    document.getElementById(s).classList.toggle('hidden', s!==id);
+  });
+}
+
+/* ===================== Início do jogo ===================== */
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnReplay').addEventListener('click', startGame);
+
+function startGame(){
+  deck = shuffle(CARDS);
+  deckIndex = 0;
+  score = 0;
+  streak = 0;
+  timeLeft = START_SECONDS;
+  answered = [];
+  answering = false;
+
+  document.getElementById('hudScore').textContent = '0';
+  document.getElementById('hudTime').textContent = String(timeLeft);
+  document.getElementById('hudStreak').textContent = '0';
+  document.getElementById('timerBar').style.width = '100%';
+  document.getElementById('timerBar').className = 'timer-bar';
+  document.getElementById('streakNote').textContent = '';
+
+  showScreen('screen-game');
+  nextCard();
+
+  clearInterval(timerId);
+  timerId = setInterval(()=>{
+    timeLeft -= 0.1;
+    if(timeLeft <= 0){
+      timeLeft = 0;
+      updateTimerDisplay();
+      endGame();
+      return;
+    }
+    updateTimerDisplay();
+  }, 100);
+}
+
+function updateTimerDisplay(){
+  document.getElementById('hudTime').textContent = String(Math.ceil(timeLeft));
+  const pct = (timeLeft/START_SECONDS)*100;
+  const bar = document.getElementById('timerBar');
+  bar.style.width = pct+'%';
+  bar.className = 'timer-bar' + (pct<15?' danger':(pct<40?' warn':''));
+}
+
+/* ===================== Ciclo de cartas ===================== */
+function nextCard(){
+  if(deckIndex >= deck.length){
+    deck = shuffle(CARDS);
+    deckIndex = 0;
+  }
+  currentCard = deck[deckIndex++];
+  answering = false;
+
+  document.getElementById('cardTopic').textContent = currentCard.topic;
+  document.getElementById('cardText').textContent = currentCard.text;
+  document.getElementById('feedbackBox').className = 'feedback-box';
+  document.getElementById('feedbackBox').style.display = 'none';
+  document.getElementById('nextHint').textContent = '';
+  document.getElementById('btnOk').disabled = false;
+  document.getElementById('btnErr').disabled = false;
+}
+
+document.getElementById('btnOk').addEventListener('click', ()=>answerCard(false));
+document.getElementById('btnErr').addEventListener('click', ()=>answerCard(true));
+
+function answerCard(userSaysError){
+  if(answering || timeLeft<=0) return;
+  answering = true;
+  document.getElementById('btnOk').disabled = true;
+  document.getElementById('btnErr').disabled = true;
+
+  const wasCorrect = (userSaysError === currentCard.hasError);
+  answered.push({card: currentCard, wasCorrect});
+
+  const fb = document.getElementById('feedbackBox');
+  const verdictEl = document.getElementById('feedbackVerdict');
+  const textEl = document.getElementById('feedbackText');
+  textEl.textContent = currentCard.explanation;
+
+  if(wasCorrect){
+    score += 10;
+    streak += 1;
+    let bonus = 0;
+    if(streak>0 && streak%3===0){ bonus = 5; score += bonus; }
+    fb.className = 'feedback-box correct';
+    verdictEl.textContent = bonus>0 ? `Correto! (+10, sequência de ${streak}: +${bonus} de bônus)` : 'Correto! (+10)';
+    document.getElementById('streakNote').textContent = streak>=3 ? `Sequência de ${streak} acertos.` : '';
+  } else {
+    streak = 0;
+    fb.className = 'feedback-box wrong';
+    verdictEl.textContent = 'Não é isso.';
+    document.getElementById('streakNote').textContent = '';
+  }
+  fb.style.display = 'block';
+  document.getElementById('hudScore').textContent = String(score);
+  document.getElementById('hudStreak').textContent = String(streak);
+  document.getElementById('nextHint').textContent = 'Próxima carta em instantes...';
+
+  clearTimeout(autoAdvanceId);
+  autoAdvanceId = setTimeout(()=>{
+    if(timeLeft>0) nextCard();
+  }, 2200);
+}
+
+/* ===================== Fim de jogo ===================== */
+function endGame(){
+  clearInterval(timerId);
+  clearTimeout(autoAdvanceId);
+
+  const total = answered.length;
+  const correct = answered.filter(a=>a.wasCorrect).length;
+  const accuracy = total>0 ? Math.round((correct/total)*100) : 0;
+
+  document.getElementById('finalScore').textContent = String(score);
+  document.getElementById('finalAccuracy').textContent = String(accuracy);
+  document.getElementById('finalCorrect').textContent = String(correct);
+  document.getElementById('finalTotal').textContent = String(total);
+
+  // breakdown por tema
+  const topics = {};
+  answered.forEach(a=>{
+    const t = a.card.topic;
+    if(!topics[t]) topics[t] = {correct:0, total:0};
+    topics[t].total++;
+    if(a.wasCorrect) topics[t].correct++;
+  });
+  const tbody = document.getElementById('breakdownBody');
+  tbody.innerHTML = '';
+  Object.keys(topics).forEach(t=>{
+    const d = topics[t];
+    const pct = Math.round((d.correct/d.total)*100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${t}</td><td class="num">${d.correct}/${d.total}</td>
+      <td class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // revisão dos erros
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = '';
+  const wrongOnes = answered.filter(a=>!a.wasCorrect);
+  const rightOnes = answered.filter(a=>a.wasCorrect);
+
+  function buildReviewItem(a){
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `<span class="topic-badge">${a.card.topic}</span>
+      <div>${a.card.text}</div>
+      <div class="truth ${a.card.hasError?'err':'ok'}">${a.card.hasError ? 'Este item TEM erro:' : 'Este item está CORRETO:'}</div>
+      <div>${a.card.explanation}</div>`;
+    return div;
+  }
+
+  if(wrongOnes.length===0){
+    reviewList.innerHTML += '<p style="text-align:center; color:var(--ok); font-weight:600;">Nenhum erro para revisar. Excelente sprint.</p>';
+  } else {
+    const h3 = document.createElement('h3');
+    h3.style.cssText = 'margin-bottom:8px; font-size:1rem;';
+    h3.textContent = 'Revisar o que você errou';
+    reviewList.appendChild(h3);
+    wrongOnes.forEach(a=> reviewList.appendChild(buildReviewItem(a)));
+  }
+
+  if(rightOnes.length>0){
+    const details = document.createElement('details');
+    details.className = 'review-correct-details';
+    const summary = document.createElement('summary');
+    summary.textContent = `Revisar também os acertos (${rightOnes.length}) — bom para confirmar se não foi só palpite`;
+    details.appendChild(summary);
+    const wrap = document.createElement('div');
+    wrap.style.marginTop = '12px';
+    rightOnes.forEach(a=> wrap.appendChild(buildReviewItem(a)));
+    details.appendChild(wrap);
+    reviewList.appendChild(details);
+  }
+
+  showScreen('screen-end');
+}
+</script>
+</body>
+</html>
