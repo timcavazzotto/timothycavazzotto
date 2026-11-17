@@ -1,0 +1,742 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Laboratório 2×2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho fixo com abas → um módulo por vez, coluna única no celular, duas colunas a partir de ~900px */
+:root{
+  --bg:#F5F2EC; --surface:#FFFDF9; --ink:#14213D; --muted:#4F5A6B; --line:#DCD5C8;
+  --accent:#C8551F; --accent-ink:#FFF8F2; --accent-soft:#FBE6D8;
+  --blue:#2B6CB0; --blue-soft:#E2E9F2; --ok:#2E7D4F; --ok-soft:#E1F1E7; --bad:#B23A2E; --bad-soft:#F8E1DE;
+  --chip:#ECE7DD;
+  --f-display:'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --f-body:'IBM Plex Sans', 'Segoe UI', Roboto, Arial, sans-serif;
+  --f-mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1526; --surface:#162038; --ink:#ECEFF5; --muted:#A8B3C5; --line:#2A3757;
+  --accent:#F08A50; --accent-ink:#1A0F08; --accent-soft:#3A2417;
+  --blue:#82B6E6; --blue-soft:#1C2A47; --ok:#6CC895; --ok-soft:#163327; --bad:#F08A80; --bad-soft:#3A1C1A;
+  --chip:#1F2B48; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E1526; --surface:#162038; --ink:#ECEFF5; --muted:#A8B3C5; --line:#2A3757;
+  --accent:#F08A50; --accent-ink:#1A0F08; --accent-soft:#3A2417;
+  --blue:#82B6E6; --blue-soft:#1C2A47; --ok:#6CC895; --ok-soft:#163327; --bad:#F08A80; --bad-soft:#3A1C1A;
+  --chip:#1F2B48; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:0 48px}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top, 0px); z-index:10; background:var(--bg)}
+.wrap{max-width:1120px; margin:0 auto}
+h1,h2,h3{font-family:var(--f-display); text-wrap:balance; margin:0; line-height:1.15}
+p{margin:0}
+.mono{font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+
+header.top{position:sticky; top:env(safe-area-inset-top, 0px); z-index:5; background:var(--bg); padding-block:18px 0; border-bottom:1px solid var(--line)}
+.brand{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.brand h1{font-size:clamp(26px, 4vw, 36px); font-weight:700}
+.brand .sub{color:var(--muted); font-size:15px}
+.tabs{display:flex; gap:4px; overflow-x:auto; margin-top:14px; scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none; border:0; background:transparent; color:var(--muted); font:600 15px/1.2 var(--f-body);
+  padding:12px 14px 13px; border-bottom:3px solid transparent; cursor:pointer; white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+.tab:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{outline:3px solid var(--blue); outline-offset:2px}
+
+main{padding-top:24px}
+.view{display:flex; flex-direction:column; gap:20px}
+.lead{max-width:68ch; color:var(--muted); font-size:16px}
+.lead b{color:var(--ink)}
+.eyebrow{font:600 12px/1 var(--f-body); letter-spacing:.12em; text-transform:uppercase; color:var(--accent)}
+.grid2{display:grid; grid-template-columns:minmax(0,1fr); gap:20px}
+@media (min-width:900px){ .grid2{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)} }
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:16px; min-width:0}
+.panel h2{font-size:22px}
+.panel h3{font-size:18px}
+.row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; font-weight:600; color:var(--muted)}
+select, input[type=number]{font:500 16px var(--f-body); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; min-height:44px}
+select{min-width:0; width:100%; max-width:100%}
+label.fld{min-width:0}
+
+/* tabela 2x2 */
+.t2-wrap{overflow-x:auto}
+table.t2{border-collapse:separate; border-spacing:6px; width:100%; min-width:0}
+table.t2 th{font:600 13px/1.25 var(--f-body); color:var(--muted); text-align:center; padding:4px}
+table.t2 th.rowh{text-align:left; color:var(--ink); font-size:14px}
+table.t2 td{text-align:center}
+.cell{display:flex; flex-direction:column; align-items:center; gap:4px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 6px}
+.cell .lt{font:600 13px var(--f-mono); color:var(--accent)}
+.cell input{width:100%; min-width:0; max-width:120px; text-align:center; font:600 18px var(--f-mono); border:0; background:transparent; padding:4px; min-height:36px}
+.tot{font:500 15px var(--f-mono); color:var(--muted)}
+
+/* resultados */
+.cards{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px}
+.card{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; min-width:0}
+.card .k{font:600 12px/1.2 var(--f-body); letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.card .v{font:600 30px/1.1 var(--f-display); color:var(--ink); font-variant-numeric:tabular-nums}
+.card .f{font:400 13px/1.45 var(--f-mono); color:var(--muted); overflow-wrap:anywhere}
+.card .ci{font:500 14px var(--f-mono); color:var(--ink)}
+.card.na{opacity:.75; border-style:dashed}
+.card.na .v{font-size:18px; color:var(--muted); font-family:var(--f-body); font-weight:600}
+.card.hl{border-color:var(--accent); background:var(--accent-soft)}
+.chip{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:var(--chip); font:600 13px var(--f-body); color:var(--ink)}
+.chip.ok{background:var(--ok-soft); color:var(--ok)}
+.chip.warn{background:var(--accent-soft); color:var(--accent)}
+.sentence{font:500 18px/1.5 var(--f-display); background:var(--blue-soft); border-radius:12px; padding:16px 18px}
+.note{font-size:14px; color:var(--muted)}
+.dots{display:flex; flex-wrap:wrap; gap:5px; max-width:520px}
+.dot{width:14px; height:14px; border-radius:50%; background:var(--line)}
+.dot.on{background:var(--accent); transform:scale(1.25)}
+
+/* sliders */
+.slider{display:flex; flex-direction:column; gap:8px}
+.slider .top{display:flex; justify-content:space-between; gap:12px; font-weight:600}
+.slider .top .mono{color:var(--accent); font-size:18px}
+input[type=range]{width:100%; accent-color:var(--accent); min-height:32px}
+.big2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.big{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:14px 16px}
+.big .k{font:600 12px var(--f-body); letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.big .v{font:700 clamp(30px,6vw,44px)/1.1 var(--f-display); font-variant-numeric:tabular-nums}
+.big.rr .v{color:var(--blue)}
+.big.or .v{color:var(--accent)}
+svg.chart{width:100%; height:auto; display:block}
+svg.chart text{font-family:var(--f-body); font-size:12px; fill:var(--muted)}
+.legend{display:flex; gap:16px; flex-wrap:wrap; font-size:14px; color:var(--muted)}
+.sw{display:inline-block; width:18px; height:4px; border-radius:2px; vertical-align:middle; margin-right:6px}
+
+/* quiz */
+.qhead{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+.progress{display:flex; gap:6px; flex-wrap:wrap}
+.pdot{width:12px; height:12px; border-radius:50%; background:var(--line); border:0; padding:0; cursor:pointer}
+.pdot.cur{outline:2px solid var(--ink); outline-offset:2px}
+.pdot.ok{background:var(--ok)}
+.pdot.bad{background:var(--bad)}
+.qsrc{font-size:13px; color:var(--muted)}
+.qtext{font:500 19px/1.5 var(--f-body); max-width:72ch}
+.qtext b{color:var(--accent)}
+.opts{display:flex; flex-direction:column; gap:10px}
+.opt{appearance:none; text-align:left; font:500 16px/1.45 var(--f-body); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:14px 16px; cursor:pointer; display:flex; gap:12px; align-items:flex-start; width:100%}
+.opt .l{font:700 15px var(--f-mono); color:var(--accent); min-width:22px}
+.opt:hover:not([disabled]){border-color:var(--blue)}
+.opt[disabled]{cursor:default}
+.opt.right{background:var(--ok-soft); border-color:var(--ok)}
+.opt.wrong{background:var(--bad-soft); border-color:var(--bad)}
+.fb{font-size:14px; margin-top:4px; color:var(--ink)}
+.explain{background:var(--blue-soft); border-radius:12px; padding:14px 16px; font-size:15px}
+.btns{display:flex; gap:10px; flex-wrap:wrap}
+.btn{appearance:none; font:600 15px var(--f-body); border-radius:10px; padding:12px 18px; min-height:44px; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--ink)}
+.btn.primary{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.score{font:600 15px var(--f-body)}
+footer{margin-top:32px; font-size:13px; color:var(--muted); max-width:80ch}
+@media (max-width:520px){ table.t2{border-spacing:3px} table.t2 th.rowh{font-size:12px; hyphens:auto; padding:2px} .cell{padding:6px 2px} .cell input{font-size:15px; padding:2px 0} .tot{font-size:13px} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <h1>Laboratório 2×2</h1>
+    <p class="sub">Bioestatística na Medicina · UNICENTRO</p>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Módulos">
+    <button class="tab" role="tab" id="tab-calculadora" data-view="calculadora">Calculadora</button>
+    <button class="tab" role="tab" id="tab-raro-comum" data-view="raro-comum">Raro × comum</button>
+    <button class="tab" role="tab" id="tab-caso-controle" data-view="caso-controle">Caso-controle</button>
+    <button class="tab" role="tab" id="tab-questoes" data-view="questoes">Questões</button>
+  </nav>
+</header>
+
+<main>
+<!-- ============ CALCULADORA ============ -->
+<section class="view" id="view-calculadora" role="tabpanel" aria-labelledby="tab-calculadora">
+  <div>
+    <p class="eyebrow">Módulo 1</p>
+    <h2 style="font-size:clamp(24px,3.4vw,32px);margin-top:6px">Monte a tabela, veja todas as medidas</h2>
+  </div>
+  <p class="lead">Escolha um exemplo da aula ou digite seus números. Cada medida aparece com a conta por extenso, nas letras <b>a, b, c, d</b>. O desenho do estudo decide o que pode ser calculado.</p>
+  <div class="grid2">
+    <div class="panel">
+      <div class="row">
+        <label class="fld" style="flex:1 1 220px">Exemplo
+          <select id="preset">
+            <option value="select">SELECT · semaglutida × placebo</option>
+            <option value="obesidade">Obesidade × inatividade (amostra didática)</option>
+            <option value="dollhill">Doll &amp; Hill · fumo e câncer de pulmão</option>
+            <option value="aracatuba">Questão Araçatuba 2025 · NNT</option>
+            <option value="unaerp">Questão UNAERP 2017 · razão de chances</option>
+            <option value="custom">Meus números</option>
+          </select>
+        </label>
+        <label class="fld" style="flex:1 1 180px">Desenho do estudo
+          <select id="design">
+            <option value="ensaio">Ensaio clínico ou coorte</option>
+            <option value="transversal">Transversal</option>
+            <option value="cc">Caso-controle</option>
+          </select>
+        </label>
+      </div>
+      <div class="t2-wrap">
+        <table class="t2" aria-label="Tabela 2 por 2">
+          <thead><tr><th></th><th id="h-out">Com desfecho</th><th id="h-nout">Sem desfecho</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><th class="rowh" id="h-exp">Expostos</th>
+              <td><div class="cell"><span class="lt">a</span><input id="a" type="number" min="0" step="1" inputmode="numeric" aria-label="Célula a"></div></td>
+              <td><div class="cell"><span class="lt">b</span><input id="b" type="number" min="0" step="1" inputmode="numeric" aria-label="Célula b"></div></td>
+              <td class="tot" id="n1">–</td></tr>
+            <tr><th class="rowh" id="h-nexp">Não expostos</th>
+              <td><div class="cell"><span class="lt">c</span><input id="c" type="number" min="0" step="1" inputmode="numeric" aria-label="Célula c"></div></td>
+              <td><div class="cell"><span class="lt">d</span><input id="d" type="number" min="0" step="1" inputmode="numeric" aria-label="Célula d"></div></td>
+              <td class="tot" id="n2">–</td></tr>
+            <tr><th class="rowh">Total</th><td class="tot" id="m1">–</td><td class="tot" id="m2">–</td><td class="tot" id="nt">–</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" id="preset-note"></p>
+      <div class="row" id="rare-row"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Cada linha, separada</h3>
+      <div class="cards" id="row-cards"></div>
+      <h3>Comparando as linhas</h3>
+      <div class="cards" id="cmp-cards"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Como escrever o resultado</h3>
+    <p class="sentence" id="sentence"></p>
+    <div id="nnt-box" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</section>
+
+<!-- ============ RARO x COMUM ============ -->
+<section class="view" id="view-raro-comum" role="tabpanel" aria-labelledby="tab-raro-comum" hidden>
+  <div>
+    <p class="eyebrow">Módulo 2</p>
+    <h2 style="font-size:clamp(24px,3.4vw,32px);margin-top:6px">Quando a razão de chances engana</h2>
+  </div>
+  <p class="lead">Fixe o efeito (o RR) e mude apenas o quanto o desfecho é comum no grupo não exposto. Enquanto o evento é raro, <b>RC e RR andam juntos</b>. Quando ele fica comum, a RC se afasta do 1 muito mais que o RR.</p>
+  <div class="grid2">
+    <div class="panel">
+      <div class="slider">
+        <div class="top"><label for="s-rr">Efeito real (RR)</label><span class="mono" id="v-rr">2,00</span></div>
+        <input id="s-rr" type="range" min="0.3" max="4" step="0.05" value="2">
+      </div>
+      <div class="slider">
+        <div class="top"><label for="s-p0">Frequência do desfecho nos não expostos</label><span class="mono" id="v-p0">5%</span></div>
+        <input id="s-p0" type="range" min="1" max="49" step="1" value="5">
+      </div>
+      <div class="big2">
+        <div class="big rr"><p class="k">Risco relativo</p><p class="v" id="o-rr">2,00</p></div>
+        <div class="big or"><p class="k">Razão de chances</p><p class="v" id="o-or">2,11</p></div>
+      </div>
+      <p class="mono note" id="o-detail"></p>
+      <p class="chip" id="o-verdict"></p>
+    </div>
+    <div class="panel">
+      <h3>RC conforme o desfecho fica comum</h3>
+      <svg class="chart" id="chart-rc" viewBox="0 0 600 340" role="img" aria-label="Gráfico da razão de chances e do risco relativo conforme a frequência do desfecho"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--blue)"></span>RR (fixo)</span>
+        <span><span class="sw" style="background:var(--accent)"></span>RC</span>
+        <span><span class="sw" style="background:var(--chip);height:10px"></span>evento raro (&lt; 10%)</span>
+      </div>
+      <p class="note">Na aula: SELECT (evento em ~7%) → RR 0,81 e RC 0,80. Obesidade (~47%) → RP 4,4 e RC 11,6.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CASO-CONTROLE ============ -->
+<section class="view" id="view-caso-controle" role="tabpanel" aria-labelledby="tab-caso-controle" hidden>
+  <div>
+    <p class="eyebrow">Módulo 3</p>
+    <h2 style="font-size:clamp(24px,3.4vw,32px);margin-top:6px">Quantos controles por caso?</h2>
+  </div>
+  <p class="lead">Em Doll &amp; Hill (Londres, 1948–50), os pesquisadores escolheram 1 controle sem câncer para cada um dos 649 homens com câncer de pulmão. Mude essa escolha e veja o que acontece com o “risco” e com a <b>razão de chances</b>.</p>
+  <div class="grid2">
+    <div class="panel">
+      <div class="slider">
+        <div class="top"><label for="s-k">Controles por caso</label><span class="mono" id="v-k">1</span></div>
+        <input id="s-k" type="range" min="1" max="10" step="1" value="1">
+      </div>
+      <div class="t2-wrap">
+        <table class="t2" aria-label="Tabela de Doll e Hill">
+          <thead><tr><th></th><th>Câncer (casos)</th><th>Controles</th></tr></thead>
+          <tbody>
+            <tr><th class="rowh">Fumantes</th><td class="mono" id="dh-a">647</td><td class="mono" id="dh-b">622</td></tr>
+            <tr><th class="rowh">Não fumantes</th><td class="mono" id="dh-c">2</td><td class="mono" id="dh-d">27</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="big2">
+        <div class="big"><p class="k">“Risco” entre fumantes</p><p class="v" id="dh-risk" style="color:var(--muted)">51%</p></div>
+        <div class="big or"><p class="k">Razão de chances</p><p class="v" id="dh-or">14,0</p></div>
+      </div>
+      <p class="mono note" id="dh-f"></p>
+    </div>
+    <div class="panel">
+      <h3>O “risco” depende da escolha do pesquisador</h3>
+      <svg class="chart" id="chart-dh" viewBox="0 0 600 300" role="img" aria-label="Barras do falso risco para 1 a 10 controles por caso"></svg>
+      <p class="note">Dobrar os controles dobra <b>b</b> e <b>d</b> juntos. O produto cruzado (a × d) ÷ (b × c) não muda, por isso a RC é a única medida válida no caso-controle. Como o câncer de pulmão é raro na população, essa RC se aproxima do RR.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUESTÕES ============ -->
+<section class="view" id="view-questoes" role="tabpanel" aria-labelledby="tab-questoes" hidden>
+  <div>
+    <p class="eyebrow">Módulo 4</p>
+    <h2 style="font-size:clamp(24px,3.4vw,32px);margin-top:6px">Questões com feedback</h2>
+  </div>
+  <p class="lead">Questões de residência e situações da aula. Escolha uma alternativa: o comentário aparece na hora, inclusive para as erradas.</p>
+  <div class="panel" id="quiz">
+    <div class="qhead">
+      <div class="progress" id="q-progress" aria-label="Progresso"></div>
+      <p class="score" id="q-score"></p>
+    </div>
+    <p class="qsrc" id="q-src"></p>
+    <div class="qtext" id="q-text"></div>
+    <div class="opts" id="q-opts"></div>
+    <div class="explain" id="q-explain" hidden></div>
+    <div class="btns">
+      <button class="btn" id="q-prev" type="button">Anterior</button>
+      <button class="btn primary" id="q-next" type="button">Próxima</button>
+      <button class="btn" id="q-reset" type="button">Recomeçar</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  Fontes: Lincoff AM et al. Semaglutide and cardiovascular outcomes in obesity without diabetes (SELECT). N Engl J Med 2023. · Doll R, Hill AB. Smoking and carcinoma of the lung. BMJ 1950;2:739–48. · Barros AJD, Hirakata VN. BMC Med Res Methodol 2003;3:21. · A tabela de obesidade × inatividade é uma amostra didática. Intervalos de confiança: método logarítmico (RR, RC) e de Wald (DR); com célula zero, soma-se 0,5 a todas as células.
+</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const fmt = (x, d=2) => (isFinite(x) ? x.toLocaleString('pt-BR', {minimumFractionDigits:d, maximumFractionDigits:d}) : '∞');
+  const pct = (x, d=1) => (isFinite(x) ? (x*100).toLocaleString('pt-BR', {minimumFractionDigits:d, maximumFractionDigits:d}) + '%' : '–');
+  const int = (x) => Math.round(x).toLocaleString('pt-BR');
+
+  /* ---------- abas com hash ---------- */
+  const views = ['calculadora','raro-comum','caso-controle','questoes'];
+  function show(v){
+    if(!views.includes(v)) v = 'calculadora';
+    views.forEach(n => {
+      $('view-'+n).hidden = (n !== v);
+      const t = $('tab-'+n); t.setAttribute('aria-selected', String(n===v)); t.tabIndex = (n===v) ? 0 : -1;
+    });
+    if (v === 'raro-comum') drawRC();
+    if (v === 'caso-controle') drawDH();
+  }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.view;
+    if (location.hash !== '#'+v) { location.hash = v; } else { show(v); }
+  }));
+  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+
+  /* ---------- MÓDULO 1: calculadora ---------- */
+  const presets = {
+    select:{a:569,b:8234,c:701,d:8100,design:'ensaio',exp:'Semaglutida',nexp:'Placebo',out:'Evento CV',nout:'Sem evento',outw:'infarto, AVC ou morte cardiovascular',
+      note:'Ensaio SELECT, ~3 anos de seguimento (média de 39,8 meses).'},
+    obesidade:{a:75,b:35,c:12,d:65,design:'transversal',exp:'Inativos',nexp:'Ativos',out:'Obesos',nout:'Não obesos',outw:'obesidade',
+      note:'Amostra didática da aula, 187 adultos avaliados numa única visita.'},
+    dollhill:{a:647,b:622,c:2,d:27,design:'cc',exp:'Fumantes',nexp:'Não fumantes',out:'Câncer (casos)',nout:'Controles',outw:'câncer de pulmão',
+      note:'Doll & Hill, BMJ 1950: homens, 1 controle pareado por caso.'},
+    aracatuba:{a:4,b:96,c:8,d:92,design:'ensaio',exp:'Tratados',nexp:'Controle',out:'Evento CV',nout:'Sem evento',outw:'evento cardiovascular',
+      note:'Questão da Santa Casa de Araçatuba 2025: 4% × 8% em 1 ano. Usamos 100 pessoas por grupo só para montar a tabela.'},
+    unaerp:{a:360,b:162,c:40,d:378,design:'cc',exp:'Fumantes',nexp:'Não fumantes',out:'Casos',nout:'Controles',outw:'câncer de pulmão',
+      note:'Questão UNAERP 2017: 400 casos (90% fumantes) e 540 controles (30% fumantes).'},
+    custom:null
+  };
+  let st = {...presets.select};
+
+  function applyPreset(key){
+    const p = presets[key];
+    if (p){ st = {...p}; }
+    else { st = {...st, note:'Seus números. Os nomes das linhas e colunas seguem o último exemplo escolhido.'}; }
+    ['a','b','c','d'].forEach(k => $(k).value = st[k]);
+    $('design').value = st.design;
+    renderCalc();
+  }
+
+  function zfix(a,b,c,d){
+    if (a===0||b===0||c===0||d===0) return {a:a+.5,b:b+.5,c:c+.5,d:d+.5,fixed:true};
+    return {a,b,c,d,fixed:false};
+  }
+  function card(k, v, f, ci, cls=''){
+    return `<div class="card ${cls}"><p class="k">${k}</p><p class="v">${v}</p>${f?`<p class="f">${f}</p>`:''}${ci?`<p class="ci">${ci}</p>`:''}</div>`;
+  }
+  function naCard(k, why){
+    return `<div class="card na"><p class="k">${k}</p><p class="v">Não calculável</p><p class="f" style="font-family:var(--f-body)">${why}</p></div>`;
+  }
+
+  function renderCalc(){
+    const a = +$('a').value||0, b = +$('b').value||0, c = +$('c').value||0, d = +$('d').value||0;
+    st.a=a; st.b=b; st.c=c; st.d=d; st.design = $('design').value;
+    const des = st.design;
+    $('h-exp').textContent = st.exp; $('h-nexp').textContent = st.nexp;
+    $('h-out').textContent = st.out; $('h-nout').textContent = st.nout;
+    const n1=a+b, n2=c+d, m1=a+c, m2=b+d, n=n1+n2;
+    $('n1').textContent = int(n1); $('n2').textContent = int(n2);
+    $('m1').textContent = int(m1); $('m2').textContent = int(m2); $('nt').textContent = int(n);
+    $('preset-note').textContent = st.note || '';
+
+    const rows = $('row-cards'), cmp = $('cmp-cards');
+    if (n1===0 || n2===0){
+      rows.innerHTML = '<p class="note">Preencha as duas linhas para calcular.</p>'; cmp.innerHTML=''; $('sentence').textContent=''; $('nnt-box').innerHTML=''; $('rare-row').innerHTML=''; return;
+    }
+    const p1=a/n1, p0=c/n2;
+    const o1 = b>0 ? a/b : Infinity, o0 = d>0 ? c/d : Infinity;
+    const freq = m1/n;
+
+    // evento raro?
+    if (des==='cc'){
+      $('rare-row').innerHTML = '<span class="chip warn">Caso-controle: a frequência do desfecho foi escolhida pelo pesquisador</span>';
+    } else {
+      $('rare-row').innerHTML = freq < 0.10
+        ? `<span class="chip ok">Desfecho em ${pct(freq)} → evento raro: RC ≈ ${des==='transversal'?'RP':'RR'}</span>`
+        : `<span class="chip warn">Desfecho em ${pct(freq)} → evento comum: a RC exagera</span>`;
+    }
+
+    // linhas
+    const wordP = des==='transversal' ? 'Prevalência' : 'Risco';
+    let rh = '';
+    if (des==='cc'){
+      rh += naCard('Risco de cada linha', 'O pesquisador escolheu quantos casos e controles estudar; a proporção de doentes na tabela não existe na natureza.');
+    } else {
+      rh += card(`${wordP} · ${st.exp}`, pct(p1), `a ÷ (a + b) = ${int(a)} ÷ ${int(n1)}`);
+      rh += card(`${wordP} · ${st.nexp}`, pct(p0), `c ÷ (c + d) = ${int(c)} ÷ ${int(n2)}`);
+    }
+    rh += card(`Chance · ${st.exp}`, fmt(o1, 3), `a ÷ b = ${int(a)} ÷ ${int(b)}`);
+    rh += card(`Chance · ${st.nexp}`, fmt(o0, 3), `c ÷ d = ${int(c)} ÷ ${int(d)}`);
+    rows.innerHTML = rh;
+
+    // comparações
+    const z = zfix(a,b,c,d);
+    const rr = (z.a/(z.a+z.b))/(z.c/(z.c+z.d));
+    const seRR = Math.sqrt(1/z.a - 1/(z.a+z.b) + 1/z.c - 1/(z.c+z.d));
+    const rrL = Math.exp(Math.log(rr)-1.96*seRR), rrU = Math.exp(Math.log(rr)+1.96*seRR);
+    const or = (z.a*z.d)/(z.b*z.c);
+    const seOR = Math.sqrt(1/z.a+1/z.b+1/z.c+1/z.d);
+    const orL = Math.exp(Math.log(or)-1.96*seOR), orU = Math.exp(Math.log(or)+1.96*seOR);
+    const dr = p1 - p0;
+    const seDR = Math.sqrt(p1*(1-p1)/n1 + p0*(1-p0)/n2);
+    const drL = dr-1.96*seDR, drU = dr+1.96*seDR;
+    const fixNote = z.fixed ? ' (com 0,5 somado às células)' : '';
+
+    let ch = '';
+    const nameR = des==='transversal' ? 'Razão de prevalências (RP)' : 'Risco relativo (RR)';
+    if (des==='cc'){
+      ch += naCard('RR ou RP', 'Sem risco válido, não há razão de riscos. Use a RC.');
+    } else {
+      ch += card(nameR, fmt(rr), `[a ÷ (a + b)] ÷ [c ÷ (c + d)] = ${pct(p1)} ÷ ${pct(p0)}`, `IC95% ${fmt(rrL)} a ${fmt(rrU)}${fixNote}`, 'hl');
+    }
+    ch += card('Razão de chances (RC)', fmt(or), `(a × d) ÷ (b × c) = (${int(a)} × ${int(d)}) ÷ (${int(b)} × ${int(c)})`, `IC95% ${fmt(orL)} a ${fmt(orU)}${fixNote}`, des==='cc'?'hl':'');
+    if (des==='cc'){
+      ch += naCard('Diferença de riscos', 'Precisa de riscos verdadeiros.');
+    } else {
+      const nmD = des==='transversal' ? 'Diferença de prevalências' : 'Diferença de riscos (DR)';
+      ch += card(nmD, (dr>=0?'+':'−') + fmt(Math.abs(dr)*100,1) + ' p.p.', `${pct(p1)} − ${pct(p0)}`, `IC95% ${fmt(drL*100,1)} a ${fmt(drU*100,1)} p.p.`);
+    }
+    cmp.innerHTML = ch;
+
+    // frase
+    let s = '';
+    const ciTxt = (L,U) => `(IC95% ${fmt(L)} a ${fmt(U)})`;
+    const nullTxt = (L,U) => (L<=1 && U>=1) ? ' O intervalo inclui o 1: os dados são compatíveis com nenhum efeito.' : ' O intervalo não inclui o 1.';
+    if (des==='ensaio'){
+      s = `O risco de ${st.outw} no grupo ${st.exp.toLowerCase()} foi ${fmt(rr)} vez${rr>=2||rr<1?'es':''} o risco no grupo ${st.nexp.toLowerCase()} ${ciTxt(rrL,rrU)}.` + nullTxt(rrL,rrU);
+    } else if (des==='transversal'){
+      s = `A prevalência de ${st.outw} entre ${st.exp.toLowerCase()} foi ${fmt(rr)} vezes a prevalência entre ${st.nexp.toLowerCase()} ${ciTxt(rrL,rrU)}.` + nullTxt(rrL,rrU) + ' Num transversal, não sabemos o que veio primeiro.';
+    } else {
+      s = `A chance de exposição (${st.exp.toLowerCase()}) entre os casos de ${st.outw} foi ${fmt(or)} vezes a chance entre os controles ${ciTxt(orL,orU)}.` + nullTxt(orL,orU);
+    }
+    $('sentence').textContent = s;
+
+    // NNT
+    const box = $('nnt-box');
+    if (des!=='ensaio'){
+      box.innerHTML = `<p class="note">NNT e NNH só têm sentido em ensaio clínico ou coorte, com um período definido.</p>`;
+    } else if (dr === 0){
+      box.innerHTML = `<p class="note">Sem diferença de risco: o NNT seria infinito.</p>`;
+    } else {
+      const nn = Math.ceil(1/Math.abs(dr) - 1e-9);
+      const benefit = dr < 0;
+      const label = benefit ? 'NNT · número necessário para tratar' : 'NNH · número necessário para causar dano';
+      const txt = benefit
+        ? `Expondo ${int(nn)} pessoas, evita-se 1 caso de ${st.outw} a mais que no grupo ${st.nexp.toLowerCase()}, no período do estudo.`
+        : `Expondo ${int(nn)} pessoas, ocorre 1 caso de ${st.outw} a mais que no grupo ${st.nexp.toLowerCase()}, no período do estudo.`;
+      let dots = '';
+      if (nn <= 150){
+        const hi = Math.floor(nn/2);
+        for (let i=0;i<nn;i++) dots += `<span class="dot${i===hi?' on':''}"></span>`;
+        dots = `<div class="dots" role="img" aria-label="${nn} pessoas, uma destacada">${dots}</div>`;
+      } else {
+        dots = `<p class="note">Grande demais para desenhar: ${int(nn)} pessoas.</p>`;
+      }
+      box.innerHTML = `<div class="row" style="gap:16px;align-items:flex-start">${card(label, int(nn), `1 ÷ |DR| = 1 ÷ ${fmt(Math.abs(dr),4)} = ${fmt(1/Math.abs(dr),1)} → arredonda para cima`,'', 'hl')}<p style="flex:1 1 260px;font-size:16px">${txt}</p></div>${dots}`;
+    }
+  }
+
+  $('preset').addEventListener('change', e => applyPreset(e.target.value));
+  $('design').addEventListener('change', renderCalc);
+  ['a','b','c','d'].forEach(k => $(k).addEventListener('input', () => {
+    if ($('preset').value !== 'custom'){ $('preset').value = 'custom'; st.note = 'Seus números. Os nomes das linhas e colunas seguem o último exemplo escolhido.'; }
+    renderCalc();
+  }));
+
+  /* ---------- MÓDULO 2: raro x comum ---------- */
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent, text){
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text!=null) e.textContent = text;
+    parent.appendChild(e); return e;
+  }
+  const orFrom = (rr, p0) => { const p1 = rr*p0; return (p1/(1-p1))/(p0/(1-p0)); };
+
+  function updateRCControls(){
+    const rr = +$('s-rr').value;
+    const maxP = Math.min(49, Math.floor(95/rr));
+    $('s-p0').max = String(Math.max(2, maxP));
+    if (+$('s-p0').value > maxP) $('s-p0').value = String(maxP);
+    const p0 = +$('s-p0').value/100;
+    const or = orFrom(rr,p0), p1 = rr*p0;
+    $('v-rr').textContent = fmt(rr); $('v-p0').textContent = Math.round(p0*100)+'%';
+    $('o-rr').textContent = fmt(rr); $('o-or').textContent = fmt(or);
+    $('o-detail').textContent = `Risco: ${pct(p1)} × ${pct(p0)} · chance: ${fmt(p1/(1-p1),3)} × ${fmt(p0/(1-p0),3)}`;
+    const ratio = Math.log(or)/Math.log(rr);
+    const v = $('o-verdict');
+    if (Math.abs(rr-1) < 0.01){ v.className='chip'; v.textContent='RR = 1: sem efeito, e a RC também é 1.'; }
+    else if (p0 < 0.10 && Math.abs(ratio-1) < 0.15){ v.className='chip ok'; v.textContent='Evento raro: RC ≈ RR.'; }
+    else { v.className='chip warn'; v.textContent=`Evento comum: a RC exagera o efeito (${fmt(or)} contra ${fmt(rr)}).`; }
+    drawRC();
+  }
+
+  function drawRC(){
+    const svg = $('chart-rc'); if (!svg) return;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const W=600,H=340, L=56, R=20, T=20, B=48;
+    const rr = +$('s-rr').value;
+    const pmax = Math.min(0.49, 0.95/rr);
+    const xs = (p) => L + (p-0.01)/(pmax-0.01)*(W-L-R);
+    let ymax = Math.max(rr, orFrom(rr,pmax)), ymin = Math.min(rr, orFrom(rr,pmax), 1);
+    ymin = Math.max(0, Math.min(ymin, 1)); ymax = Math.max(ymax, 1);
+    ymax = ymax + (ymax-ymin)*0.08;
+    const ys = (y) => T + (1-(y-ymin)/(ymax-ymin))*(H-T-B);
+    // zona rara
+    if (pmax > 0.10) el('rect',{x:xs(0.01),y:T,width:xs(0.10)-xs(0.01),height:H-T-B,fill:'var(--chip)'},svg);
+    // grade e eixos
+    const nt = 5;
+    for (let i=0;i<=nt;i++){
+      const yv = ymin + (ymax-ymin)*i/nt, y = ys(yv);
+      el('line',{x1:L,x2:W-R,y1:y,y2:y,stroke:'var(--line)','stroke-width':1},svg);
+      el('text',{x:L-8,y:y+4,'text-anchor':'end'},svg, fmt(yv,1));
+    }
+    const step = pmax > 0.3 ? 0.1 : 0.05;
+    for (let p=0.1; p<=pmax+1e-9; p+=step){
+      const x = xs(p);
+      el('text',{x:x,y:H-B+18,'text-anchor':'middle'},svg, Math.round(p*100)+'%');
+    }
+    el('text',{x:(L+W-R)/2,y:H-8,'text-anchor':'middle'},svg,'Frequência do desfecho nos não expostos');
+    // linha nula
+    if (1>=ymin && 1<=ymax) el('line',{x1:L,x2:W-R,y1:ys(1),y2:ys(1),stroke:'var(--muted)','stroke-dasharray':'4 4','stroke-width':1},svg);
+    // RR
+    el('line',{x1:L,x2:W-R,y1:ys(rr),y2:ys(rr),stroke:'var(--blue)','stroke-width':3},svg);
+    // RC curva
+    let d='';
+    for (let i=0;i<=80;i++){
+      const p = 0.01 + (pmax-0.01)*i/80;
+      d += (i?'L':'M') + xs(p).toFixed(1) + ' ' + ys(orFrom(rr,p)).toFixed(1);
+    }
+    el('path',{d:d,fill:'none',stroke:'var(--accent)','stroke-width':3},svg);
+    // marcador
+    const p0 = +$('s-p0').value/100;
+    const xm = xs(Math.min(p0,pmax)), ym = ys(orFrom(rr,Math.min(p0,pmax)));
+    el('line',{x1:xm,x2:xm,y1:T,y2:H-B,stroke:'var(--accent)','stroke-width':1,'stroke-dasharray':'2 4'},svg);
+    el('circle',{cx:xm,cy:ym,r:7,fill:'var(--accent)',stroke:'var(--surface)','stroke-width':2},svg);
+    el('circle',{cx:xm,cy:ys(rr),r:6,fill:'var(--blue)',stroke:'var(--surface)','stroke-width':2},svg);
+  }
+  $('s-rr').addEventListener('input', updateRCControls);
+  $('s-p0').addEventListener('input', updateRCControls);
+
+  /* ---------- MÓDULO 3: caso-controle ---------- */
+  const DH = {a:647, b:622, c:2, d:27};
+  function updateDH(){
+    const k = +$('s-k').value;
+    const b = DH.b*k, d = DH.d*k;
+    $('v-k').textContent = String(k);
+    $('dh-b').textContent = int(b); $('dh-d').textContent = int(d);
+    const risk = DH.a/(DH.a+b);
+    const or = (DH.a*d)/(b*DH.c);
+    $('dh-risk').textContent = pct(risk,0);
+    $('dh-or').textContent = fmt(or,1);
+    $('dh-f').textContent = `“Risco” = 647 ÷ (647 + ${int(b)}) · RC = (647 × ${int(d)}) ÷ (${int(b)} × 2) = ${fmt(or,1)}`;
+    drawDH();
+  }
+  function drawDH(){
+    const svg = $('chart-dh'); if (!svg) return;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const W=600,H=300,L=48,R=16,T=20,B=44;
+    const k = +$('s-k').value;
+    const bw = (W-L-R)/10;
+    const ys = (v) => T + (1-v/0.6)*(H-T-B);
+    [0,0.2,0.4,0.6].forEach(v => {
+      el('line',{x1:L,x2:W-R,y1:ys(v),y2:ys(v),stroke:'var(--line)'},svg);
+      el('text',{x:L-8,y:ys(v)+4,'text-anchor':'end'},svg, Math.round(v*100)+'%');
+    });
+    for (let i=1;i<=10;i++){
+      const r = DH.a/(DH.a+DH.b*i);
+      const x = L + (i-1)*bw + bw*0.18, w = bw*0.64;
+      el('rect',{x:x,y:ys(r),width:w,height:ys(0)-ys(r),rx:4,fill: i===k ? 'var(--accent)' : 'var(--blue-soft)', stroke: i===k ? 'none' : 'var(--line)'},svg);
+      el('text',{x:x+w/2,y:H-B+18,'text-anchor':'middle'},svg, String(i));
+      if (i===k) el('text',{x:x+w/2,y:ys(r)-8,'text-anchor':'middle',style:'fill:var(--ink);font-weight:600'},svg, pct(r,0));
+    }
+    el('text',{x:(L+W-R)/2,y:H-6,'text-anchor':'middle'},svg,'Controles por caso · a RC fica em 14,0 em todas as barras');
+  }
+  $('s-k').addEventListener('input', updateDH);
+
+  /* ---------- MÓDULO 4: questões ---------- */
+  const Q = [
+    {src:'Residência · Santa Casa de Araçatuba 2025 (R1) · gabarito C · enunciado adaptado',
+     text:'Em um estudo clínico, um medicamento reduziu a incidência de um evento cardiovascular numa população de alto risco. Após 1 ano, <b>4%</b> do grupo tratado e <b>8%</b> do grupo controle tiveram o evento. Qual o NNT para prevenir um evento?',
+     opts:[
+      {t:'8', fb:'Confunde o NNT com o risco do grupo controle (8%).'},
+      {t:'12', fb:'Não sai de nenhuma conta correta com esses dados.'},
+      {t:'25', ok:true, fb:'Isso: DR = 8% − 4% = 0,04; NNT = 1 ÷ 0,04 = 25 em 1 ano.'},
+      {t:'50', fb:'Corresponderia a uma diferença de 2 pontos; aqui ela é de 4.'}],
+     ex:'O NNT nasce da diferença absoluta, nunca da razão. A redução relativa aqui é 50% (RR 0,5), mas 1 ÷ 0,5 = 2 não é NNT. Teste na Calculadora com o exemplo “Questão Araçatuba”.'},
+    {src:'Residência · UNAERP 2017 · resposta D pela conta (gabarito oficial não conferido) · enunciado adaptado',
+     text:'Num estudo caso-controle, foram analisados <b>400 casos</b> de câncer de pulmão e <b>540 controles</b>. Eram fumantes <b>90%</b> dos casos e <b>30%</b> dos controles. Qual a razão de chances associada ao fumo?',
+     opts:[
+      {t:'1,1', fb:'Não sai do produto cruzado com esses dados.'},
+      {t:'10', fb:'Não sai do produto cruzado com esses dados.'},
+      {t:'11', fb:'Perto, mas não é o produto cruzado. Monte a tabela antes.'},
+      {t:'21', ok:true, fb:'Isso: a = 360, b = 162, c = 40, d = 378; (360 × 378) ÷ (162 × 40) = 21.'},
+      {t:'31', fb:'Não sai do produto cruzado com esses dados.'}],
+     ex:'Primeiro monte a 2×2: 90% de 400 = 360 casos fumantes; 30% de 540 = 162 controles fumantes. Dividir 90% por 30% dá 3, que não é RC nem RR. Confira na Calculadora com o exemplo “Questão UNAERP”.'},
+    {src:'Residência · PUC-PR 2020 (R1) · gabarito B · enunciado resumido',
+     text:'Sobre a <b>odds ratio (OR)</b>, assinale a alternativa correta:',
+     opts:[
+      {t:'É usada exclusivamente em estudos retrospectivos.', fb:'O OR serve para qualquer desenho; no caso-controle ele é a única opção, mas não a única aplicação.'},
+      {t:'Quanto mais raro o desfecho, mais o OR se aproxima do risco relativo.', ok:true, fb:'Isso: é a regra do evento raro. Veja no módulo Raro × comum.'},
+      {t:'É a razão entre o risco nos expostos e o risco nos não expostos.', fb:'Essa é a definição do RR. O OR divide chances (casos ÷ não casos).'},
+      {t:'É a razão entre a probabilidade de exposição nos doentes e nos não doentes.', fb:'O OR divide chances de exposição, não probabilidades.'},
+      {t:'Representa uma associação causal.', fb:'Nenhuma medida de associação, sozinha, prova causalidade.'}],
+     ex:'No SELECT (evento em ~7%), RR 0,81 e RC 0,80. Na amostra de obesidade (~47%), RP 4,4 e RC 11,6.'},
+    {src:'Residência · USP-SP 2019 (Acesso Direto) · resposta B pela teoria (gabarito oficial não conferido)',
+     text:'Qual estratégia pode ser utilizada para controlar fatores de confusão num estudo epidemiológico <b>transversal</b>?',
+     opts:[
+      {t:'Aleatorização', fb:'Controla confusão, mas só existe em ensaio: é o pesquisador quem sorteia a exposição.'},
+      {t:'Estratificação', ok:true, fb:'Isso: separar por faixas (como a idade) e comparar dentro delas. A regressão faz o mesmo com muitas variáveis.'},
+      {t:'Emparelhamento', fb:'É feito no desenho, ao escolher os participantes; típico do caso-controle.'},
+      {t:'Cegamento', fb:'Evita viés de aferição, não confusão.'}],
+     ex:'Na aula, a RP bruta de 4,4 caiu para 2,5 e 2,8 dentro das faixas etárias: parte da associação era da idade.'},
+    {src:'Residência · FMABC 2012 (Acesso Direto) · resposta A pela teoria (gabarito oficial não conferido)',
+     text:'Sobre a análise de sobrevivência, é <b>incorreto</b> afirmar:',
+     opts:[
+      {t:'A análise multivariada de grupos é realizada pela regressão logística.', ok:true, fb:'Isso, esta é a incorreta: a logística ignora o tempo e a censura. Para tempo até o evento, usa-se a regressão de Cox.'},
+      {t:'Na curva de Kaplan-Meier, as quedas são os desfechos e as marcas são os censurados.', fb:'Está correta, então não é a resposta.'},
+      {t:'A análise considera todo o período de observação, não só o status final.', fb:'Está correta, então não é a resposta.'},
+      {t:'O hazard ratio pode ser usado como medida de associação.', fb:'Está correta, então não é a resposta.'}],
+     ex:'Cada regressão casa com um tipo de desfecho: sim/não raro → logística (RC); sim/não comum → Poisson robusta (RP ou RR); tempo até o evento → Cox (HR).'},
+    {src:'Situação da aula · qual modelo?',
+     text:'Inquérito com 3.000 adultos, numa única visita: <b>hipertensão (prevalência de 25%)</b> e consumo de sal. Qual regressão e qual medida?',
+     opts:[
+      {t:'Logística → RC', fb:'Possível, mas com desfecho comum (25%) a RC exageraria a associação.'},
+      {t:'Poisson robusta → RP', ok:true, fb:'Isso: transversal com desfecho comum pede razão de prevalências.'},
+      {t:'Cox → HR', fb:'Não há tempo até o evento: é uma visita só.'}],
+     ex:'Recomendação clássica para transversais com desfecho comum: Barros & Hirakata, 2003.'},
+    {src:'Situação da aula · qual modelo?',
+     text:'<b>300 casos</b> de câncer de esôfago e <b>600 controles</b>: consumo de chimarrão muito quente. Qual regressão e qual medida?',
+     opts:[
+      {t:'Logística → RC', ok:true, fb:'Isso: no caso-controle, só a RC é válida.'},
+      {t:'Poisson robusta → RR', fb:'Não há risco verdadeiro: o pesquisador escolheu quantos casos e controles estudar.'},
+      {t:'Cox → HR', fb:'Não há acompanhamento no tempo.'}],
+     ex:'Mesma lógica de Doll & Hill. Veja no módulo Caso-controle como o “risco” muda com o número de controles e a RC não.'},
+    {src:'Situação da aula · qual modelo?',
+     text:'Ensaio de quimioterapia: <b>tempo até o óbito</b>, com pacientes que saem do estudo antes do fim. Qual regressão e qual medida?',
+     opts:[
+      {t:'Logística → RC', fb:'Ignoraria o tempo e as perdas de seguimento.'},
+      {t:'Poisson robusta → RR', fb:'Trataria o desfecho só como sim/não no fim, sem usar o tempo.'},
+      {t:'Cox → HR', ok:true, fb:'Isso: tempo até o evento, com censura dos que saem antes.'}],
+     ex:'O HR compara a velocidade com que os eventos acontecem a cada momento, supondo que essa razão seja constante no tempo.'},
+    {src:'Situação da aula · ler o resultado',
+     text:'Resultado: <b>RP ajustada por idade = 2,69 (IC95% 1,56 a 4,66)</b>. Qual frase está correta?',
+     opts:[
+      {t:'Os inativos têm chance 2,69 vezes maior de obesidade.', fb:'RP fala de prevalência; “chance” é a linguagem da RC.'},
+      {t:'Após ajuste por idade, a prevalência de obesidade nos inativos foi 2,69 vezes a dos ativos.', ok:true, fb:'Isso: medida certa, comparação e ajuste. Completa, incluiria o IC.'},
+      {t:'A inatividade causa obesidade em 169% dos casos.', fb:'Uma razão não é porcentagem de casos, e um transversal não prova causa.'},
+      {t:'O resultado é significativo porque o IC95% não contém o zero.', fb:'Conclusão certa, motivo errado: para razões, o valor nulo é 1.'}],
+     ex:'Modelo de frase: “Após ajuste por [variáveis], a [medida] de [desfecho] nos [expostos] foi [valor] vezes a dos [não expostos] (IC95% [a] a [b]).”'}
+  ];
+  let qi = 0; const ans = new Array(Q.length).fill(null);
+  const letters = 'ABCDE';
+  function renderQ(){
+    const q = Q[qi];
+    $('q-src').textContent = `Questão ${qi+1} de ${Q.length} · ${q.src}`;
+    $('q-text').innerHTML = q.text;
+    const box = $('q-opts'); box.innerHTML = '';
+    q.opts.forEach((o, i) => {
+      const b = document.createElement('button');
+      b.type='button'; b.className='opt'; b.id = `q${qi}-o${i}`;
+      b.innerHTML = `<span class="l">${letters[i]}</span><span><span>${o.t}</span><span class="fb" hidden></span></span>`;
+      b.addEventListener('click', () => { if (ans[qi]===null){ ans[qi]=i; renderQ(); } });
+      box.appendChild(b);
+    });
+    const chosen = ans[qi];
+    if (chosen !== null){
+      q.opts.forEach((o,i) => {
+        const b = $(`q${qi}-o${i}`); b.disabled = true;
+        const fb = b.querySelector('.fb');
+        if (o.ok){ b.classList.add('right'); }
+        if (i===chosen && !o.ok){ b.classList.add('wrong'); }
+        if (i===chosen || o.ok){ fb.hidden=false; fb.textContent = (o.ok ? 'Correta. ' : 'Incorreta. ') + o.fb; fb.style.display='block'; }
+      });
+      $('q-explain').hidden = false; $('q-explain').textContent = q.ex;
+    } else { $('q-explain').hidden = true; }
+    $('q-prev').disabled = qi===0;
+    $('q-next').textContent = qi===Q.length-1 ? 'Ver resultado' : 'Próxima';
+    // progresso
+    const pr = $('q-progress'); pr.innerHTML='';
+    Q.forEach((qq,i) => {
+      const d = document.createElement('button'); d.type='button';
+      d.className = 'pdot' + (i===qi?' cur':'') + (ans[i]===null?'':(qq.opts[ans[i]].ok?' ok':' bad'));
+      d.setAttribute('aria-label', `Ir para a questão ${i+1}`);
+      d.addEventListener('click', () => { qi=i; renderQ(); });
+      pr.appendChild(d);
+    });
+    const done = ans.filter(x=>x!==null).length;
+    const right = ans.filter((x,i)=>x!==null && Q[i].opts[x].ok).length;
+    $('q-score').textContent = `${right} acerto${right===1?'':'s'} em ${done} respondida${done===1?'':'s'}`;
+  }
+  $('q-prev').addEventListener('click', () => { if (qi>0){ qi--; renderQ(); } });
+  $('q-next').addEventListener('click', () => {
+    if (qi < Q.length-1){ qi++; renderQ(); }
+    else {
+      const right = ans.filter((x,i)=>x!==null && Q[i].opts[x].ok).length;
+      const done = ans.filter(x=>x!==null).length;
+      $('q-explain').hidden=false;
+      $('q-explain').textContent = `Resultado: ${right} de ${Q.length} corretas (${done} respondidas). Toque nas bolinhas acima para revisar qualquer questão.`;
+    }
+  });
+  $('q-reset').addEventListener('click', () => { ans.fill(null); qi=0; renderQ(); });
+
+  /* ---------- início ---------- */
+  applyPreset('select');
+  updateRCControls();
+  updateDH();
+  renderQ();
+  show(location.hash.slice(1));
+})();
+</script>
+
+</body></html>
