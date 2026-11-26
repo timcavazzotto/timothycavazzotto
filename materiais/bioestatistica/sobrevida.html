@@ -1,0 +1,431 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>sobrevida</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F5F2EC; --surface:#FFFDF9; --ink:#14213D; --muted:#4F5A6B; --line:#DCD5C8;
+  --accent:#C8551F; --accent-soft:#FBE6D8; --blue:#2B6CB0; --blue-soft:#E2E9F2;
+  --ok:#2E7D4F; --ok-soft:#E1F1E7; --bad:#B23A2E; --bad-soft:#F8E1DE; --chip:#ECE7DD;
+  --tp:#C8551F; --fn:#F0B48F; --fp:#2B6CB0; --tn:#D5DCE6;
+  --f-display:'Source Serif 4', Georgia, serif; --f-body:'IBM Plex Sans','Segoe UI',Roboto,Arial,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1526; --surface:#162038; --ink:#ECEFF5; --muted:#A8B3C5; --line:#2A3757;
+  --accent:#F08A50; --accent-soft:#3A2417; --blue:#82B6E6; --blue-soft:#1C2A47;
+  --ok:#6CC895; --ok-soft:#163327; --bad:#F08A80; --bad-soft:#3A1C1A; --chip:#1F2B48;
+  --tp:#F08A50; --fn:#7A4A30; --fp:#82B6E6; --tn:#2A3757; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E1526; --surface:#162038; --ink:#ECEFF5; --muted:#A8B3C5; --line:#2A3757;
+  --accent:#F08A50; --accent-soft:#3A2417; --blue:#82B6E6; --blue-soft:#1C2A47;
+  --ok:#6CC895; --ok-soft:#163327; --bad:#F08A80; --bad-soft:#3A1C1A; --chip:#1F2B48;
+  --tp:#F08A50; --fn:#7A4A30; --fp:#82B6E6; --tn:#2A3757; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-bottom:48px}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.15;text-wrap:balance}
+p{margin:0}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:18px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:clamp(24px,4vw,34px)}
+.brand .sub{color:var(--muted);font-size:15px}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin-top:12px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:transparent;color:var(--muted);font:600 15px/1.2 var(--f-body);padding:12px 14px 13px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+main{padding-top:24px}
+.view{display:flex;flex-direction:column;gap:20px}
+.eyebrow{font:600 12px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.vh{font-size:clamp(24px,3.4vw,32px);margin-top:6px}
+.lead{max-width:70ch;color:var(--muted)}
+.lead b{color:var(--ink)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@media (min-width:900px){.grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel h3{font-size:19px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{appearance:none;font:600 15px var(--f-body);border-radius:10px;padding:10px 16px;min-height:44px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px}
+select,input[type=number]{font:500 16px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:44px;max-width:100%}
+label.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+.note{font-size:14px;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table.dt{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+table.dt th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);font-weight:600}
+table.dt td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.dt tr.cens td{color:var(--muted)}
+table.dt input[type=number]{width:76px;min-height:38px;padding:6px 8px;font-family:var(--f-mono)}
+.st{appearance:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;min-height:36px;font:600 13px var(--f-body);cursor:pointer;white-space:nowrap}
+.st.ev{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.st.ce{background:var(--chip);color:var(--muted)}
+.del{appearance:none;border:0;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;min-width:36px;min-height:36px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.card .k{font:600 11px/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card .v{font:600 28px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.card .f{font:400 12.5px/1.4 var(--f-mono);color:var(--muted);overflow-wrap:anywhere}
+.card.hl{border-color:var(--accent);background:var(--accent-soft)}
+.card.dim .v{color:var(--muted)}
+svg.chart{width:100%;height:auto;display:block}
+svg.chart text{font-family:var(--f-body);font-size:17px;fill:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+.slider{display:flex;flex-direction:column;gap:6px}
+.slider .top{display:flex;justify-content:space-between;gap:12px;font-weight:600;font-size:15px}
+.slider .top .mono{color:var(--accent);font-size:17px}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
+.grid1000{display:grid;grid-template-columns:repeat(40,1fr);gap:2px;max-width:560px}
+.grid1000 span{aspect-ratio:1;border-radius:2px;background:var(--tn)}
+.sentence{font:500 17px/1.5 var(--f-display);background:var(--blue-soft);border-radius:12px;padding:14px 16px}
+table.t2{border-collapse:separate;border-spacing:4px;width:100%;font-variant-numeric:tabular-nums}
+table.t2 th{font:600 13px var(--f-body);color:var(--muted);text-align:center;padding:4px}
+table.t2 th.rh{text-align:left;color:var(--ink)}
+table.t2 td{text-align:center;font:600 17px var(--f-mono);border-radius:8px;padding:10px 4px}
+td.ctp{background:var(--accent-soft);color:var(--ink)} td.cfp{background:var(--blue-soft)} td.cfn{background:var(--bg);border:1px dashed var(--accent)} td.ctn{background:var(--bg)}
+td.tot{color:var(--muted);font-weight:500}
+.chip{display:inline-flex;padding:4px 10px;border-radius:999px;background:var(--chip);font:600 13px var(--f-body)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.warn{background:var(--accent-soft);color:var(--accent)}
+/* quiz */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.progress{display:flex;gap:6px;flex-wrap:wrap}
+.pdot{width:12px;height:12px;border-radius:50%;background:var(--line);border:0;padding:0;cursor:pointer}
+.pdot.cur{outline:2px solid var(--ink);outline-offset:2px} .pdot.ok{background:var(--ok)} .pdot.bad{background:var(--bad)}
+.qsrc{font-size:13px;color:var(--muted)}
+.qtext{font:500 18px/1.5 var(--f-body);max-width:72ch}
+.qtext b{color:var(--accent)}
+.qdata{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{appearance:none;text-align:left;font:500 16px/1.45 var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;width:100%}
+.opt .l{font:700 15px var(--f-mono);color:var(--accent);min-width:22px}
+.opt[disabled]{cursor:default}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)} .opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.fb{display:block;font-size:14px;margin-top:4px}
+.explain{background:var(--blue-soft);border-radius:12px;padding:14px 16px;font-size:15px}
+footer{margin-top:32px;font-size:13px;color:var(--muted);max-width:80ch}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="brand"><h1>Laboratório de sobrevida e testes</h1><p class="sub">Bioestatística na Medicina · UNICENTRO</p></div>
+  <nav class="tabs" role="tablist" aria-label="Módulos">
+    <button class="tab" role="tab" id="tab-km" data-view="km">Kaplan-Meier</button>
+    <button class="tab" role="tab" id="tab-teste" data-view="teste">Teste diagnóstico</button>
+    <button class="tab" role="tab" id="tab-corte" data-view="corte">Ponto de corte</button>
+    <button class="tab" role="tab" id="tab-questoes" data-view="questoes">Questões</button>
+  </nav>
+</header>
+
+<main>
+<!-- KAPLAN-MEIER -->
+<section class="view" id="view-km" role="tabpanel" aria-labelledby="tab-km">
+  <div><p class="eyebrow">Módulo 1</p><h2 class="vh">Monte a curva de Kaplan-Meier</h2></div>
+  <p class="lead">Os 10 pacientes da aula: acompanhados por até 12 meses após um infarto; desfecho, <b>morte cardiovascular</b>. Mude o tempo de alguém, troque evento por censura ou acrescente pacientes e veja a tabela e a curva se refazerem.</p>
+  <div class="grid2">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h3>Pacientes</h3>
+        <div class="row"><button class="btn sm" id="km-add" type="button">+ paciente</button><button class="btn sm" id="km-reset" type="button">Voltar ao exemplo</button></div>
+      </div>
+      <div class="tw"><table class="dt" id="km-pts"></table></div>
+    </div>
+    <div class="panel">
+      <h3>A curva</h3>
+      <svg class="chart" id="km-chart" viewBox="0 0 560 360" role="img" aria-label="Curva de Kaplan-Meier"></svg>
+      <div class="legend"><span><span class="sw" style="background:var(--ink)"></span>S(t)</span><span>| censura</span><span><span class="sw" style="background:var(--accent)"></span>mediana</span></div>
+      <div class="cards" id="km-cards"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>A conta, degrau por degrau</h3>
+    <div class="tw"><table class="dt" id="km-tab"></table></div>
+    <p class="note">Em cada mês com evento: n = quem ainda está vivo e em observação; S(t) = S(anterior) × (1 − d ÷ n). Censurados saem do n depois do seu tempo e não derrubam a curva.</p>
+  </div>
+</section>
+
+<!-- TESTE -->
+<section class="view" id="view-teste" role="tabpanel" aria-labelledby="tab-teste" hidden>
+  <div><p class="eyebrow">Módulo 2</p><h2 class="vh">Mesmo teste, outra prevalência</h2></div>
+  <p class="lead">Ajuste sensibilidade, especificidade e prevalência. A tabela mostra <b>1.000 pessoas testadas</b>. Repare que o VPP despenca quando a doença fica rara, mesmo com o teste igual.</p>
+  <div class="grid2">
+    <div class="panel">
+      <label class="fld">Exemplo
+        <select id="dx-preset">
+          <option value="aula1">Aula 1 · prevalência 1%, teste 90/90</option>
+          <option value="cov-s">Antígeno COVID · com sintomas (Cochrane)</option>
+          <option value="cov-a">Antígeno COVID · sem sintomas (Cochrane)</option>
+          <option value="hrms">Questão HRMS 2009 · sens 70%, esp 40%</option>
+        </select>
+      </label>
+      <div class="slider"><div class="top"><label for="s-sens">Sensibilidade</label><span class="mono" id="v-sens"></span></div><input id="s-sens" type="range" min="1" max="100" step="0.5"></div>
+      <div class="slider"><div class="top"><label for="s-esp">Especificidade</label><span class="mono" id="v-esp"></span></div><input id="s-esp" type="range" min="1" max="100" step="0.1"></div>
+      <div class="slider"><div class="top"><label for="s-prev">Prevalência entre os testados</label><span class="mono" id="v-prev"></span></div><input id="s-prev" type="range" min="0.5" max="99.5" step="0.5"></div>
+      <p class="note" id="dx-note"></p>
+      <div class="tw"><table class="t2" aria-label="Tabela 2 por 2 do teste">
+        <tr><th></th><th>Doente</th><th>Não doente</th><th>Total</th></tr>
+        <tr><th class="rh">Teste +</th><td class="ctp" id="c-a"></td><td class="cfp" id="c-b"></td><td class="tot" id="c-ab"></td></tr>
+        <tr><th class="rh">Teste −</th><td class="cfn" id="c-c"></td><td class="ctn" id="c-d"></td><td class="tot" id="c-cd"></td></tr>
+        <tr><th class="rh">Total</th><td class="tot" id="c-ac"></td><td class="tot" id="c-bd"></td><td class="tot">1.000</td></tr>
+      </table></div>
+    </div>
+    <div class="panel">
+      <h3>1.000 pessoas, uma por quadradinho</h3>
+      <div class="grid1000" id="dx-grid" role="img" aria-label="Mil quadrados coloridos por resultado"></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--tp)"></span>verdadeiro +</span>
+        <span><span class="sw" style="background:var(--fp)"></span>falso +</span>
+        <span><span class="sw" style="background:var(--fn)"></span>falso −</span>
+        <span><span class="sw" style="background:var(--tn)"></span>verdadeiro −</span>
+      </div>
+      <div class="cards" id="dx-cards"></div>
+      <p class="sentence" id="dx-sentence"></p>
+    </div>
+  </div>
+</section>
+
+<!-- CORTE -->
+<section class="view" id="view-corte" role="tabpanel" aria-labelledby="tab-corte" hidden>
+  <div><p class="eyebrow">Módulo 3</p><h2 class="vh">Arraste o ponto de corte</h2></div>
+  <p class="lead">Um exame contínuo (como a troponina) tem valores que se sobrepõem entre doentes e não doentes. <b>Baixar o corte</b> pega mais doentes e erra mais sadios; subir faz o contrário. Dados ilustrativos.</p>
+  <div class="grid2">
+    <div class="panel">
+      <svg class="chart" id="cut-dist" viewBox="0 0 560 300" role="img" aria-label="Distribuições de doentes e não doentes com o ponto de corte"></svg>
+      <div class="slider"><div class="top"><label for="s-cut">Ponto de corte</label><span class="mono" id="v-cut"></span></div><input id="s-cut" type="range" min="150" max="650" step="5" value="420"></div>
+      <div class="slider"><div class="top"><label for="s-sep">Separação entre os grupos (qualidade do exame)</label><span class="mono" id="v-sep"></span></div><input id="s-sep" type="range" min="0" max="300" step="10" value="180"></div>
+      <div class="cards" id="cut-cards"></div>
+    </div>
+    <div class="panel">
+      <h3>Curva ROC</h3>
+      <svg class="chart" id="cut-roc" viewBox="0 0 400 400" role="img" aria-label="Curva ROC com o ponto de corte atual"></svg>
+      <p class="note">Cada ponto da curva é um corte: sensibilidade no eixo vertical, 1 − especificidade no horizontal. A área sob a curva (AUC) vai de 0,5 (moeda) a 1,0 (separa todos).</p>
+    </div>
+  </div>
+</section>
+
+<!-- QUESTÕES -->
+<section class="view" id="view-questoes" role="tabpanel" aria-labelledby="tab-questoes" hidden>
+  <div><p class="eyebrow">Módulo 4</p><h2 class="vh">Questões com feedback</h2></div>
+  <p class="lead">Questões de residência e situações da aula. Escolha uma alternativa: o comentário aparece na hora, inclusive para as erradas.</p>
+  <div class="panel">
+    <div class="qhead"><div class="progress" id="q-progress"></div><p class="note" id="q-score"></p></div>
+    <p class="qsrc" id="q-src"></p>
+    <div class="qdata" id="q-data" hidden></div>
+    <div class="qtext" id="q-text"></div>
+    <div class="opts" id="q-opts"></div>
+    <div class="explain" id="q-explain" hidden></div>
+    <div class="row"><button class="btn" id="q-prev" type="button">Anterior</button><button class="btn primary" id="q-next" type="button">Próxima</button><button class="btn" id="q-reset" type="button">Recomeçar</button></div>
+  </div>
+</section>
+</main>
+
+<footer>Fontes: Gandhi L et al. N Engl J Med 2018;378:2078–92 (KEYNOTE-189). Forde PM et al. N Engl J Med 2025 (CheckMate 816, sobrevida global). Dinnes J et al. Cochrane Database Syst Rev 2022;CD013705 (antígeno para SARS-CoV-2; números ilustrativos da própria revisão). Os 10 pacientes e as distribuições do ponto de corte são exemplos didáticos.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const fmt=(x,d=2)=>isFinite(x)?x.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';
+const pct=(x,d=1)=>isFinite(x)?(x*100).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%':'–';
+const int=x=>Math.round(x).toLocaleString('pt-BR');
+const NS='http://www.w3.org/2000/svg';
+function el(t,a,p,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e}
+function clear(s){while(s.firstChild)s.removeChild(s.firstChild)}
+
+/* abas */
+const views=['km','teste','corte','questoes'];
+function show(v){if(!views.includes(v))v='km';views.forEach(n=>{$('view-'+n).hidden=n!==v;const t=$('tab-'+n);t.setAttribute('aria-selected',String(n===v));t.tabIndex=n===v?0:-1});}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{const v=b.dataset.view;if(location.hash!=='#'+v)location.hash=v;else show(v)}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+/* ---------- KM ---------- */
+const base=[[2,1,'Novo infarto'],[3,0,'Mudou de estado'],[4,1,'AVC'],[5,1,'Morte súbita'],[6,0,'Desistiu'],[8,1,'Insuficiência cardíaca'],[9,0,'Atropelado'],[11,1,'Infarto'],[12,0,'Vivo no fim'],[12,0,'Vivo no fim']];
+let pts=base.map((x,i)=>({id:'P'+(i+1),t:x[0],e:x[1],why:x[2]}));
+let nextId=11;
+function km(list){
+  const data=list.filter(p=>isFinite(p.t)&&p.t>0).slice().sort((a,b)=>a.t-b.t);
+  const times=[...new Set(data.map(p=>p.t))].sort((a,b)=>a-b);
+  let n=data.length,S=1;const rows=[];
+  for(const t of times){const d=data.filter(p=>p.t===t&&p.e).length;const c=data.filter(p=>p.t===t&&!p.e).length;
+    if(d>0){const f=1-d/n;const prev=S;S*=f;rows.push({t,n,d,f,prev,S})}
+    n-=d+c;}
+  const tmax=data.length?Math.max(...data.map(p=>p.t)):12;
+  let med=null;for(const r of rows){if(r.S<=0.5){med=r.t;break}}
+  return {data,rows,S,tmax,med};
+}
+function renderKMtable(){
+  const tb=$('km-pts');
+  let h='<tr><th>Paciente</th><th>Tempo (meses)</th><th>Status</th><th>O que aconteceu</th><th></th></tr>';
+  pts.forEach((p,i)=>{h+=`<tr class="${p.e?'':'cens'}"><td>${p.id}</td><td><input type="number" min="0.5" max="60" step="0.5" value="${p.t}" data-i="${i}" aria-label="Tempo de ${p.id}"></td><td><button type="button" class="st ${p.e?'ev':'ce'}" data-st="${i}">${p.e?'1 · evento':'0 · censura'}</button></td><td class="note">${p.why||''}</td><td><button type="button" class="del" data-del="${i}" aria-label="Remover ${p.id}">×</button></td></tr>`});
+  tb.innerHTML=h;
+  tb.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',e=>{const i=+e.target.dataset.i;const v=parseFloat(e.target.value);if(v>0){pts[i].t=v;pts[i].why='';}renderKM()}));
+  tb.querySelectorAll('[data-st]').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.st;pts[i].e=pts[i].e?0:1;pts[i].why='';renderKMtable();renderKM()}));
+  tb.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{pts.splice(+b.dataset.del,1);renderKMtable();renderKM()}));
+}
+function renderKM(){
+  const r=km(pts);
+  // tabela
+  let h='<tr><th>Mês</th><th>Em risco (n)</th><th>Eventos (d)</th><th>1 − d ÷ n</th><th>S(t)</th></tr>';
+  r.rows.forEach(x=>{h+=`<tr><td class="mono">${fmt(x.t,x.t%1?1:0)}</td><td class="mono">${x.n}</td><td class="mono">${x.d}</td><td class="mono">${fmt(x.f,3)}</td><td class="mono">${fmt(x.prev,3)} × ${fmt(x.f,3)} = <b>${pct(x.S)}</b></td></tr>`});
+  if(!r.rows.length)h+='<tr><td colspan="5" class="note">Nenhum evento: a curva fica em 100%.</td></tr>';
+  $('km-tab').innerHTML=h;
+  // ingênuos
+  const N=r.data.length, ev=r.data.filter(p=>p.e).length;
+  const tEnd=r.tmax; const known=r.data.filter(p=>p.e||p.t>=tEnd);
+  const aliveKnown=known.filter(p=>!p.e).length;
+  $('km-cards').innerHTML=
+    `<div class="card hl"><p class="k">Kaplan-Meier no fim</p><p class="v">${pct(r.S,0)}</p><p class="f">S(${fmt(tEnd,tEnd%1?1:0)})</p></div>`+
+    `<div class="card"><p class="k">Mediana</p><p class="v">${r.med==null?'NA':fmt(r.med,r.med%1?1:0)+' m'}</p><p class="f">${r.med==null?'não alcançada':'curva ≤ 50%'}</p></div>`+
+    `<div class="card dim"><p class="k">Censurados como vivos</p><p class="v">${N?pct(1-ev/N,0):'–'}</p><p class="f">${N-ev} ÷ ${N} · otimista</p></div>`+
+    `<div class="card dim"><p class="k">Excluindo quem saiu</p><p class="v">${known.length?pct(aliveKnown/known.length,0):'–'}</p><p class="f">${aliveKnown} ÷ ${known.length} · pessimista</p></div>`;
+  // gráfico
+  const svg=$('km-chart');clear(svg);
+  const L=56,R=16,T=16,B=44,W=560,H=360;const tm=Math.max(12,Math.ceil(tEnd));
+  const xs=t=>L+t/tm*(W-L-R), ys=s=>T+(1-s)*(H-T-B);
+  [0,.25,.5,.75,1].forEach(v=>{el('line',{x1:L,x2:W-R,y1:ys(v),y2:ys(v),stroke:'var(--line)'},svg);el('text',{x:L-8,y:ys(v)+4,'text-anchor':'end'},svg,Math.round(v*100)+'%')});
+  const step=tm<=12?2:tm<=24?4:Math.ceil(tm/6);
+  for(let t=0;t<=tm;t+=step)el('text',{x:xs(t),y:H-B+18,'text-anchor':'middle'},svg,String(t));
+  el('text',{x:(L+W-R)/2,y:H-6,'text-anchor':'middle'},svg,'meses');
+  let d=`M${xs(0)} ${ys(1)}`,S=1;
+  r.rows.forEach(x=>{d+=` H${xs(x.t)} V${ys(x.S)}`;S=x.S});
+  d+=` H${xs(tEnd)}`;
+  if(r.med!=null){el('path',{d:`M${L} ${ys(.5)} H${xs(r.med)} V${ys(0)}`,stroke:'var(--accent)','stroke-width':2,'stroke-dasharray':'6 5',fill:'none'},svg)}
+  el('path',{d,stroke:'var(--ink)','stroke-width':3.5,fill:'none'},svg);
+  // censuras
+  r.data.filter(p=>!p.e).forEach(p=>{let s=1;for(const x of r.rows){if(x.t<=p.t)s=x.S}el('line',{x1:xs(p.t),x2:xs(p.t),y1:ys(s)-9,y2:ys(s)+9,stroke:'var(--ink)','stroke-width':2.5},svg)});
+}
+$('km-add').addEventListener('click',()=>{pts.push({id:'P'+(nextId++),t:6,e:0,why:''});renderKMtable();renderKM()});
+$('km-reset').addEventListener('click',()=>{pts=base.map((x,i)=>({id:'P'+(i+1),t:x[0],e:x[1],why:x[2]}));nextId=11;renderKMtable();renderKM()});
+
+/* ---------- TESTE ---------- */
+const DX={
+  'aula1':{s:90,e:90,p:1,note:'Exemplo da primeira aula do semestre.'},
+  'cov-s':{s:80,e:99.5,p:5,note:'Cochrane 2022: por 1.000 sintomáticos na 1ª semana, 45 positivos (5 falsos) e 10 casos perdidos.'},
+  'cov-a':{s:64,e:99.7,p:0.5,note:'Cochrane 2022: por 10.000 assintomáticos sem contato conhecido, 62 positivos, dos quais 30 falsos.'},
+  'hrms':{s:70,e:40,p:5,note:'Questão HRMS 2009: prevalência de 50 por 1.000.'}
+};
+function setDx(k){const p=DX[k];$('s-sens').value=p.s;$('s-esp').value=p.e;$('s-prev').value=p.p;$('dx-note').textContent=p.note;renderDx()}
+function renderDx(){
+  const se=+$('s-sens').value/100, sp=+$('s-esp').value/100;
+  const pv=+$('s-prev').value/100;
+  $('v-sens').textContent=pct(se,1);$('v-esp').textContent=pct(sp,1);$('v-prev').textContent=pct(pv,pv<0.01?1:0);
+  const N=1000,D=pv*N,Hh=N-D,a=se*D,c=D-a,dd=sp*Hh,b=Hh-dd;
+  const f=x=>x>=10||Number.isInteger(Math.round(x*10)/10)?int(x):fmt(x,1);
+  $('c-a').textContent=f(a);$('c-b').textContent=f(b);$('c-c').textContent=f(c);$('c-d').textContent=f(dd);
+  $('c-ab').textContent=f(a+b);$('c-cd').textContent=f(c+dd);$('c-ac').textContent=f(D);$('c-bd').textContent=f(Hh);
+  const vpp=a/(a+b),vpn=dd/(c+dd),rvp=se/(1-sp),rvn=(1-se)/sp,acc=(a+dd)/N;
+  $('dx-cards').innerHTML=
+    `<div class="card hl"><p class="k">VPP</p><p class="v">${pct(vpp,1)}</p><p class="f">a ÷ (a + b)</p></div>`+
+    `<div class="card"><p class="k">VPN</p><p class="v">${pct(vpn,1)}</p><p class="f">d ÷ (c + d)</p></div>`+
+    `<div class="card"><p class="k">RV+</p><p class="v">${isFinite(rvp)?fmt(rvp,rvp>=10?0:1):'∞'}</p><p class="f">sens ÷ (1 − esp)</p></div>`+
+    `<div class="card"><p class="k">RV−</p><p class="v">${fmt(rvn,2)}</p><p class="f">(1 − sens) ÷ esp</p></div>`+
+    `<div class="card"><p class="k">Acurácia</p><p class="v">${pct(acc,1)}</p><p class="f">(a + d) ÷ N</p></div>`;
+  $('dx-sentence').textContent=(a+b)>0?`De cada 100 pessoas com teste positivo, cerca de ${int(vpp*100)} têm a doença e ${int(100-vpp*100)} não têm.`+(vpp<0.5?' Aqui, a maioria dos positivos é falsa.':''):'Ninguém deu positivo.';
+  // grade
+  const g=$('dx-grid');const cells=[];const A=Math.round(a),C=Math.round(c),Bf=Math.round(b);const Dn=N-A-C-Bf;
+  for(let i=0;i<A;i++)cells.push('var(--tp)');for(let i=0;i<C;i++)cells.push('var(--fn)');for(let i=0;i<Bf;i++)cells.push('var(--fp)');for(let i=0;i<Math.max(0,Dn);i++)cells.push('var(--tn)');
+  if(g.children.length!==N){g.innerHTML='';for(let i=0;i<N;i++)g.appendChild(document.createElement('span'))}
+  for(let i=0;i<N;i++)g.children[i].style.background=cells[i]||'var(--tn)';
+}
+$('dx-preset').addEventListener('change',e=>setDx(e.target.value));
+['s-sens','s-esp'].forEach(id=>$(id).addEventListener('input',renderDx));
+$('s-prev').addEventListener('input',renderDx);
+
+/* ---------- CORTE ---------- */
+const Phi=z=>{const t=1/(1+0.2316419*Math.abs(z));const d=0.3989423*Math.exp(-z*z/2);let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p};
+const SD=90, MH=300;
+function renderCut(){
+  const cut=+$('s-cut').value, sep=+$('s-sep').value, MD=MH+sep;
+  const sens=1-Phi((cut-MD)/SD), spec=Phi((cut-MH)/SD), auc=Phi(sep/SD/Math.SQRT2);
+  $('v-cut').textContent=String(cut);$('v-sep').textContent=sep===0?'nenhuma':String(sep);
+  const sv=$('cut-dist');clear(sv);const L=20,R=20,Bt=260,Hh=200;
+  const xs=v=>L+(v-50)/(850-50)*(560-L-R);
+  const pdf=(x,m)=>Math.exp(-0.5*((x-m)/SD)**2);
+  const curve=(m)=>{let d=`M${xs(50)} ${Bt}`;for(let v=50;v<=850;v+=10)d+=` L${xs(v).toFixed(1)} ${(Bt-Hh*pdf(v,m)).toFixed(1)}`;return d+` L${xs(850)} ${Bt} Z`};
+  el('path',{d:curve(MH),fill:'var(--muted)','fill-opacity':.25,stroke:'var(--muted)','stroke-width':2},sv);
+  el('path',{d:curve(MD),fill:'var(--accent)','fill-opacity':.25,stroke:'var(--accent)','stroke-width':2},sv);
+  el('line',{x1:xs(50),x2:xs(850),y1:Bt,y2:Bt,stroke:'var(--line)','stroke-width':2},sv);
+  el('line',{x1:xs(cut),x2:xs(cut),y1:20,y2:Bt+8,stroke:'var(--ink)','stroke-width':3,'stroke-dasharray':'7 5'},sv);
+  el('text',{x:xs(MH),y:Bt-Hh-10,'text-anchor':'middle'},sv,'Não doentes');
+  el('text',{x:Math.min(xs(MD),520),y:Bt-Hh-10,'text-anchor':'middle',style:'fill:var(--accent)'},sv,'Doentes');
+  el('text',{x:xs(cut)-8,y:Bt+30,'text-anchor':'end'},sv,'← negativo');
+  el('text',{x:xs(cut)+8,y:Bt+30},sv,'positivo →');
+  $('cut-cards').innerHTML=
+   `<div class="card hl"><p class="k">Sensibilidade</p><p class="v">${pct(sens,0)}</p><p class="f">doentes acima do corte</p></div>`+
+   `<div class="card"><p class="k">Especificidade</p><p class="v">${pct(spec,0)}</p><p class="f">sadios abaixo do corte</p></div>`+
+   `<div class="card"><p class="k">AUC</p><p class="v">${fmt(auc,2)}</p><p class="f">não muda com o corte</p></div>`;
+  const rv=$('cut-roc');clear(rv);const P=40,S=340;
+  const X=f=>P+f*S, Y=s=>P+S-s*S;
+  [0,.5,1].forEach(v=>{el('line',{x1:P,x2:P+S,y1:Y(v),y2:Y(v),stroke:'var(--line)'},rv);el('text',{x:P-6,y:Y(v)+4,'text-anchor':'end'},rv,Math.round(v*100)+'%')});
+  el('line',{x1:X(0),y1:Y(0),x2:X(1),y2:Y(1),stroke:'var(--muted)','stroke-dasharray':'6 6'},rv);
+  let d='';for(let c=1000;c>=-400;c-=10){const s=1-Phi((c-MD)/SD),f=1-Phi((c-MH)/SD);d+=(d?' L':'M')+X(f).toFixed(1)+' '+Y(s).toFixed(1)}
+  el('path',{d,stroke:'var(--accent)','stroke-width':3.5,fill:'none'},rv);
+  el('circle',{cx:X(1-spec),cy:Y(sens),r:8,fill:'var(--ink)',stroke:'var(--surface)','stroke-width':2},rv);
+  el('text',{x:P+S/2,y:396,'text-anchor':'middle'},rv,'1 − especificidade');
+  el('text',{x:X(0.55),y:Y(0.35),'text-anchor':'middle'},rv,'moeda (AUC 0,5)');
+}
+$('s-cut').addEventListener('input',renderCut);$('s-sep').addEventListener('input',renderCut);
+
+/* ---------- QUESTÕES ---------- */
+const Q=[
+ {src:'Situação da aula · censura',text:'Desfecho: <b>morte cardiovascular</b>. O paciente P7 morreu atropelado no mês 9. Como ele entra na análise de Kaplan-Meier?',
+  opts:[{t:'Como evento no mês 9.',fb:'Seria evento se o desfecho fosse morte por qualquer causa. Aqui não é.'},{t:'Como censura no mês 9.',ok:true,fb:'Isso: sabemos que até o mês 9 ele não teve morte cardiovascular; depois, não há mais informação.'},{t:'É excluído da análise.',fb:'Excluir joga fora 9 meses de observação real.'},{t:'Como vivo até o fim do estudo.',fb:'Ele não foi observado até o mês 12: contar como vivo deixa a curva otimista.'}],
+  ex:'Morte por outra causa é um risco competitivo: o KM trata como censura, o que pode superestimar o risco do desfecho quando essas mortes são comuns.'},
+ {src:'Situação da aula · Kaplan-Meier',text:'No mês 8, havia <b>5 pessoas em risco</b> e <b>1 morreu</b>. A sobrevida acumulada logo antes era 0,675. Quanto vale S(8)?',
+  opts:[{t:'0,80',fb:'Essa é só a probabilidade de passar por este degrau (1 − 1/5). Falta multiplicar.'},{t:'0,54',ok:true,fb:'Isso: 0,675 × (1 − 1/5) = 0,675 × 0,8 = 0,54.'},{t:'0,475',fb:'Subtrair 0,2 de 0,675 não é o método: os degraus se multiplicam.'},{t:'0,50',fb:'Não sai de nenhuma conta correta com esses dados.'}],
+  ex:'S(t) = S(anterior) × (1 − d ÷ n). Confira no módulo Kaplan-Meier.'},
+ {src:'Residência · Hospital Israelita Albert Einstein 2026 · gabarito C (Sanar) · redação resumida',
+  data:'<b>CheckMate 816, sobrevida global.</b> 358 pacientes com câncer de pulmão operável: nivolumabe + quimioterapia antes da cirurgia × quimioterapia isolada. Mediana: não alcançada × 73,7 meses · Vivos em 5 anos: 65% × 55% · HR 0,72 (IC95% 0,523 a 0,998), p = 0,048.',
+  text:'Assinale a alternativa correta:',
+  opts:[{t:'Os poucos pacientes após 72 meses invalidam a mediana de 73,7 meses do grupo quimioterapia.',fb:'Poucos pacientes deixam a estimativa imprecisa, não inválida.'},{t:'A maior parte das censuras ocorreu nos primeiros 5 anos; por isso há poucos pacientes no fim.',fb:'Só a tabela de número em risco mostraria isso; os dados não dizem.'},{t:'A sobrevida foi maior com nivolumabe, e nenhum grupo havia atingido a mediana aos 48 ou 60 meses.',ok:true,fb:'Isso: com 55% e 65% vivos aos 60 meses, nenhuma curva tinha cruzado 50%.'},{t:'O IC95% largo indica diferença muito pequena, confirmada por regressão logística (p = 0,048).',fb:'IC largo = imprecisão, não efeito pequeno. E tempo até o evento pede Cox, não logística.'}],
+  ex:'Mediana não alcançada = a curva ainda não desceu abaixo de 50% no seguimento. O limite superior do IC (0,998) encosta no 1: efeito provável, mas impreciso.'},
+ {src:'Situação da aula · comparar curvas',text:'Num ensaio, as curvas de sobrevida <b>se cruzam</b>: a cirurgia mata mais no início e protege depois. O que isso significa para o HR?',
+  opts:[{t:'O HR será exatamente 1.',fb:'Não necessariamente; pode dar qualquer valor, e esconder as duas fases.'},{t:'A razão das taxas não é constante, e um único HR resume mal o efeito.',ok:true,fb:'Isso: o modelo de Cox supõe riscos proporcionais, que aqui não valem.'},{t:'O log-rank passa a ser obrigatoriamente significativo.',fb:'Ao contrário: curvas que se cruzam podem até “cancelar” a diferença no log-rank.'},{t:'Basta usar a regressão logística.',fb:'A logística ignora o tempo e a censura; não resolve o problema.'}],
+  ex:'O HR é a razão das taxas de evento a cada momento, supondo que essa razão seja constante. Curvas que se cruzam quebram essa suposição.'},
+ {src:'Residência · Unicamp 2017 · gabarito D (comentário Medway) · enunciado levemente adaptado',
+  text:'Um pesquisador diz que um determinado exame laboratorial tem <b>sensibilidade de 98%</b> para o diagnóstico de uma doença. Isso significa que:',
+  opts:[{t:'98% dos indivíduos que não têm essa doença terão resultado negativo nesse exame.',fb:'Fala dos não doentes: isso é especificidade.'},{t:'98% dos indivíduos que têm resultado positivo para essa doença serão verdadeiramente doentes.',fb:'Fala de quem deu positivo: isso é VPP.'},{t:'2% dos indivíduos que não têm essa doença terão resultado positivo para essa doença.',fb:'Fala dos não doentes: 1 − especificidade.'},{t:'2% dos indivíduos que têm essa doença terão resultado negativo para essa doença.',ok:true,fb:'Isso: entre os doentes, 98% positivos e 2% falsos negativos.'}],
+  ex:'Procure quem está no denominador: doentes → sensibilidade; não doentes → especificidade; positivos → VPP; negativos → VPN.'},
+ {src:'Residência · HRMS 2009 · gabarito D (Sanar) · enunciado adaptado',
+  text:'Um teste tem <b>sensibilidade de 70%</b> e <b>especificidade de 40%</b>. Numa população com prevalência de <b>50 por 1.000</b>, qual é o valor preditivo positivo?',
+  opts:[{t:'3,7%',fb:'Monte a tabela com 1.000 pessoas: 35 verdadeiros positivos e 570 falsos.'},{t:'4,2%',fb:'Monte a tabela com 1.000 pessoas: 35 verdadeiros positivos e 570 falsos.'},{t:'9,6%',fb:'Monte a tabela com 1.000 pessoas: 35 verdadeiros positivos e 570 falsos.'},{t:'5,7%',ok:true,fb:'Isso: 35 ÷ (35 + 570) = 5,79%; a banca truncou para 5,7%.'},{t:'8,9%',fb:'Monte a tabela com 1.000 pessoas: 35 verdadeiros positivos e 570 falsos.'}],
+  ex:'Escolha “Questão HRMS 2009” no módulo Teste diagnóstico e veja os 570 falsos positivos ocuparem a grade.'},
+ {src:'Residência · SES-PE 2022 (Acesso Direto) · resposta D pela teoria (gabarito oficial não conferido)',
+  text:'Sobre as principais características de desempenho dos testes diagnósticos, assinale a <b>correta</b>:',
+  opts:[{t:'O valor preditivo negativo pode ser calculado como sensibilidade ÷ (1 − especificidade).',fb:'Essa é a razão de verossimilhança positiva.'},{t:'Sensibilidade é a probabilidade de resultado positivo nos doentes, calculada como d ÷ (c + d).',fb:'A definição está certa, a conta não: na tabela padrão, sensibilidade = a ÷ (a + c).'},{t:'O valor preditivo positivo indica a capacidade do teste de detectar as pessoas com a doença.',fb:'Isso descreve a sensibilidade.'},{t:'Os valores preditivos contêm informação sobre o teste (sensibilidade e especificidade) e sobre a população examinada (prevalência).',ok:true,fb:'Isso: VPP e VPN mudam com a prevalência de quem é testado.'},{t:'Acurácia é a probabilidade de um resultado nos doentes dividida pela do mesmo resultado nos não doentes.',fb:'Isso é razão de verossimilhança. Acurácia = (a + d) ÷ N.'}],
+  ex:'Valores preditivos leem a linha (misturam doentes e não doentes); por isso dependem da prevalência.'},
+ {src:'Situação da aula · SnNout e SpPin',text:'Você quer um exame de <b>triagem</b> cujo resultado negativo permita descartar a doença com segurança. O que priorizar?',
+  opts:[{t:'Alta sensibilidade.',ok:true,fb:'Isso: SnNout. Com poucos falsos negativos, um negativo descarta.'},{t:'Alta especificidade.',fb:'Especificidade alta serve para confirmar com um positivo (SpPin).'},{t:'Alta acurácia.',fb:'A acurácia mistura os dois erros e engana quando a doença é rara.'},{t:'Alto VPP.',fb:'O VPP fala de quem deu positivo, não de descartar com um negativo.'}],
+  ex:'Triagem: sensibilidade alta, para não deixar doentes passarem. Confirmação antes de tratamento agressivo: especificidade alta.'}
+];
+let qi=0;const ans=new Array(Q.length).fill(null);const L='ABCDE';
+function renderQ(){
+  const q=Q[qi];$('q-src').textContent=`Questão ${qi+1} de ${Q.length} · ${q.src}`;
+  if(q.data){$('q-data').hidden=false;$('q-data').innerHTML=q.data}else $('q-data').hidden=true;
+  $('q-text').innerHTML=q.text;const box=$('q-opts');box.innerHTML='';
+  q.opts.forEach((o,i)=>{const b=document.createElement('button');b.type='button';b.className='opt';
+    b.innerHTML=`<span class="l">${L[i]}</span><span><span>${o.t}</span><span class="fb" hidden></span></span>`;
+    b.addEventListener('click',()=>{if(ans[qi]===null){ans[qi]=i;renderQ()}});box.appendChild(b)});
+  const ch=ans[qi];
+  if(ch!==null){[...box.children].forEach((b,i)=>{const o=q.opts[i];b.disabled=true;if(o.ok)b.classList.add('right');if(i===ch&&!o.ok)b.classList.add('wrong');
+    if(i===ch||o.ok){const fb=b.querySelector('.fb');fb.hidden=false;fb.textContent=(o.ok?'Correta. ':'Incorreta. ')+o.fb}});
+    $('q-explain').hidden=false;$('q-explain').textContent=q.ex}else $('q-explain').hidden=true;
+  $('q-prev').disabled=qi===0;$('q-next').textContent=qi===Q.length-1?'Ver resultado':'Próxima';
+  const pr=$('q-progress');pr.innerHTML='';Q.forEach((qq,i)=>{const d=document.createElement('button');d.type='button';d.className='pdot'+(i===qi?' cur':'')+(ans[i]===null?'':(qq.opts[ans[i]].ok?' ok':' bad'));d.setAttribute('aria-label','Ir para a questão '+(i+1));d.addEventListener('click',()=>{qi=i;renderQ()});pr.appendChild(d)});
+  const done=ans.filter(x=>x!==null).length,right=ans.filter((x,i)=>x!==null&&Q[i].opts[x].ok).length;
+  $('q-score').textContent=`${right} acerto${right===1?'':'s'} em ${done} respondida${done===1?'':'s'}`;
+}
+$('q-prev').addEventListener('click',()=>{if(qi>0){qi--;renderQ()}});
+$('q-next').addEventListener('click',()=>{if(qi<Q.length-1){qi++;renderQ()}else{const right=ans.filter((x,i)=>x!==null&&Q[i].opts[x].ok).length;$('q-explain').hidden=false;$('q-explain').textContent=`Resultado: ${right} de ${Q.length} corretas. Toque nas bolinhas para revisar.`}});
+$('q-reset').addEventListener('click',()=>{ans.fill(null);qi=0;renderQ()});
+
+renderKMtable();renderKM();setDx('aula1');renderCut();renderQ();show(location.hash.slice(1));
+})();
+</script>
+
+</body></html>
